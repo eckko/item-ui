@@ -63,7 +63,8 @@
   }
 
   async function fetchEnc(path) {
-    const r = await fetch(BASE + path);
+    const pool = window.RecallQuizPool;
+    const r = await fetch(pool && pool.enabled ? pool.addressOf(path) : BASE + path);
     if (!r.ok) throw new Error(path + " " + r.status);
     const buf = await r.arrayBuffer();
     stats.bytes += buf.byteLength; stats.files += 1;
@@ -159,7 +160,7 @@
     window.RecallQuiz.reading.configure({ fontSize: 18, font: "serif" });
     panel = window.RecallQuiz.readingPanel.create({
       homeLabel: "Book home", onHome: goBookHome,
-      subjectPageAddress: new URL("../", location.href).href,
+      subjectPageAddress: new URL(window.RecallQuizPool && window.RecallQuizPool.enabled ? "./" : "../", location.href).href,
       addSections: addShowSection, onReset: resetShow,
     });
   }
@@ -660,6 +661,7 @@
       await loadShared();
       setUpPanel();
       KEY = await loadKey();
+      if (window.RecallQuizPool) await window.RecallQuizPool.ready();
       MANIFEST = await fetchJson("data/manifest.enc");
       window.RecallQuiz.reading.useBook(bookId());
       window.RecallQuizTheme.useBook(bookId());

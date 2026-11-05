@@ -1,0 +1,28 @@
+# Warns when this repo has been forked. GitHub cannot switch forking off
+# for a public repo, so the next best thing is to find out quickly: this
+# job fails (and GitHub emails you) when the fork count is above zero.
+# Copy it to .github/workflows/fork-warning.yml in the subject repo.
+name: fork-warning
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  forks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Count forks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          forks=$(gh api "repos/$GITHUB_REPOSITORY" --jq .forks_count)
+          echo "forks: $forks"
+          if [ "$forks" -gt 0 ]; then
+            echo "::error::This repo has $forks fork(s). Ask GitHub to remove them, or rotate the key."
+            exit 1
+          fi

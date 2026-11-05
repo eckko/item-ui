@@ -22,6 +22,17 @@ AI agents: read [`AGENTS.md`](AGENTS.md) and the
 
 ---
 
+## Subject sites with opaque names
+
+A subject site can also publish only ciphertext under neutral names: no
+per-book folders, no readable book list, no book name in any file name or
+page. Format, tools and checks are in
+[`ai-context/opaque-site.md`](ai-context/opaque-site.md); the tools are
+`tools/site/build_pool.py`, `publish_pool.sh` and `check_site.py`, the
+workflows `templates/check-site.yml` and `templates/fork-warning.yml`, and
+`python3 tests/test_opaque.py` with `node --test tests/pool-files.test.js`
+test them.
+
 ## Encrypted book sites (3.0.0)
 
 One site can hold, for each book, a reader and a quiz, with everything

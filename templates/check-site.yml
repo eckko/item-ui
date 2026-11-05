@@ -1,0 +1,41 @@
+# Checks that this subject site publishes nothing readable. Copy it to
+# .github/workflows/check-site.yml in the subject repo.
+#
+# It runs on every push and pull request. In the repo's Settings > Rules,
+# make "check" a required status check for main, so a bad file cannot be
+# merged. It fails when:
+#   * a file is not on the allowlist (see tools/site/check_site.py),
+#   * a pool file is not encrypted with the subject key, or is not listed
+#     in the index (or a listed file is missing),
+#   * a page, file name, workflow or commit message holds a book id, a book
+#     title, the subject title or an ISBN-13 number.
+#
+# Needs the repo secret SUBJECT_KEY (the subject key, 64 hex characters or
+# base64). Without it only the checks that need no key run, and the job says
+# so. The checker comes from the item UI at the tag named in boot.json.
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch the checker
+        run: |
+          tag=$(python3 -c "import json; print(json.load(open('boot.json'))['templateTag'])")
+          case "$tag" in ''|*[!0-9.]*) echo "boot.json templateTag must be an exact tag"; exit 1;; esac
+          git clone --quiet --depth 1 --branch "$tag" https://github.com/eckko/item-ui "$RUNNER_TEMP/ui"
+          pip install --quiet cryptography
+      - name: Check the site
+        env:
+          SUBJECT_KEY: ${{ secrets.SUBJECT_KEY }}
+        run: python3 "$RUNNER_TEMP/ui/tools/site/check_site.py" . --git-log
