@@ -1,0 +1,34 @@
+rules_version = '2';
+
+// Security rules for the Recall Quiz progress sync.
+// Paste these into Firebase console > Firestore Database > Rules, then
+// Publish. Each signed-in reader can read and write only their own
+// progress documents; nobody else can see them, and nothing else in the
+// database can be touched.
+//
+// The size check counts characters, not bytes, so the limit is kept
+// well under Firestore's 1 MiB per document.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/books/{bookId} {
+      allow read, delete: if request.auth != null
+                          && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+                            && request.auth.uid == userId
+                            && request.resource.data.keys()
+                                 .hasOnly(['progress', 'updatedAt'])
+                            && request.resource.data.progress is string
+                            && request.resource.data.progress.size()
+                                 < 700000;
+    }
+
+    // The book key for a book's secret pictures (media/*.enc). The
+    // author writes it by hand in the console; the page can only read
+    // it, and only for the signed-in reader's own account.
+    match /users/{userId}/mediaKeys/{bookId} {
+      allow read: if request.auth != null
+                  && request.auth.uid == userId;
+      allow write: if false;
+    }
+  }
+}

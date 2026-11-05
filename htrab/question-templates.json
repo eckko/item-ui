@@ -1,0 +1,987 @@
+[
+  {
+    "id": "appb-q-essay",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "question",
+    "title": "Essay response",
+    "action": "Respond to something you have read in an extended written statement.",
+    "check": "Did my statement deal with the text at length rather than in a phrase?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-q-main-idea",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "question",
+    "title": "Pick the main idea",
+    "action": "From a series of statements, choose the one that best expresses the main idea or ideas of the passage.",
+    "check": "Does my choice express the passage's main idea, not just a detail?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-q-detail-valid",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "question",
+    "title": "Valid detail interpretation",
+    "action": "From several statements about a detail, choose the only valid (or most apt) interpretation of the text.",
+    "check": "Is my choice supported by the text better than the alternatives?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-q-detail-odd-out",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "question",
+    "title": "Spot the incorrect choice",
+    "action": "From several statements about a detail, pick the one incorrect choice when the others are correct.",
+    "check": "Can I show from the text why the chosen statement is wrong?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-q-verbatim",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "question",
+    "title": "Recall a verbatim quotation",
+    "action": "Recognise a verbatim quotation from the text to show you noticed and remembered it.",
+    "check": "Do I remember where and in what words this appeared?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-q-fill-blank",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "question",
+    "title": "Fill the blank",
+    "action": "Choose from a lettered list the phrase that, inserted in the blank, best completes the statement.",
+    "check": "Does the completed statement make sense and match the text?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-q-outside",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "question",
+    "title": "Bring outside knowledge",
+    "action": "Answer using material outside the text that you are assumed to know already.",
+    "check": "What did I know beforehand that the text does not say?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-q-inference",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "question",
+    "title": "Draw valid inferences",
+    "action": "Select the inferences that can reasonably be drawn from the text, and discard spurious ones with no foundation in it.",
+    "check": "Is each inference I accept grounded in the text?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-reflect-not-just-test",
+    "level": "general",
+    "subtopic": "Introductory",
+    "type": "exercise",
+    "title": "Reflect, not only score",
+    "action": "Treat the questions as prompts to reflect on what you read; try the difficult ones, they may be most fun.",
+    "check": "Did I think about why an answer is right, not just whether I scored?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-comfortable-speed",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "exercise",
+    "title": "Read at comfortable speed",
+    "action": "Read the short passage at a comfortable speed, about six to ten minutes for 1,200 words; speed is not essential.",
+    "check": "Did I read steadily without rushing?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-mark-and-note",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "exercise",
+    "title": "Mark and note",
+    "action": "Mark phrases and sentences that especially interest you and make a few notes before answering the questions.",
+    "check": "Have I marked the striking passages and jotted notes?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-longer-time",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "exercise",
+    "title": "Adjust time to length",
+    "action": "Allow more time for a longer text (ten to twelve minutes), again marking striking passages and making notes.",
+    "check": "Did I scale my reading time to the passage length?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-select-all-valid",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "exercise",
+    "title": "Select all valid answers",
+    "action": "Select every answer that seems valid, whether stated, implied, or true by logic or your background knowledge.",
+    "check": "Have I considered implied and background-supported answers, not only stated ones?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-q-background-context",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "Historical context question",
+    "action": "Answer a question about the historical setting of the subject's life that the passage does not state.",
+    "check": "What do I know about the period that the text assumes?",
+    "book_kind": "biography"
+  },
+  {
+    "id": "appb-e-q-detail-recall",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "Recall stated facts",
+    "action": "Recall a specific fact given in the passage, such as who designed an education or at what age something happened.",
+    "check": "Can I point to the sentence that gives this fact?",
+    "book_kind": "biography"
+  },
+  {
+    "id": "appb-e-q-exact-wording",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "Notice exact wording",
+    "action": "Distinguish between options that differ only in whether the text's own quoted wording is used.",
+    "check": "Did I notice that the text put this word in quotation marks?",
+    "book_kind": "biography"
+  },
+  {
+    "id": "appb-e-q-multi-select",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "Several answers may be correct",
+    "action": "Identify all options that fit, such as authors who probably influenced the subject.",
+    "check": "Have I checked every option rather than stopping at the first?",
+    "book_kind": "biography"
+  },
+  {
+    "id": "appb-e-q-not-mentioned",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "What is not in the text",
+    "action": "Identify which of several items is not mentioned in the passage.",
+    "check": "Can I confirm each other item actually appears in the text?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-q-extrapolate",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "Likely or not likely today",
+    "action": "Judge whether the subject, were he alive today, would likely hold each listed position, given his views.",
+    "check": "Do my judgments follow from what the text says he believed?",
+    "book_kind": "biography"
+  },
+  {
+    "id": "appb-e-q-inference",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "Infer an attitude",
+    "action": "Infer from the text how the subject regarded a person, choosing all fitting descriptions.",
+    "check": "Which sentences support the inference I drew?",
+    "book_kind": "biography"
+  },
+  {
+    "id": "appb-e-q-true-false",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "True or false detail",
+    "action": "Decide whether a plausible-sounding statement about the subject's life is true or false according to the text.",
+    "check": "Does the text support or contradict every part of the statement?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-q-define-field",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "Define a field of study",
+    "action": "Choose the correct general definition of a field named in the text, using background knowledge.",
+    "check": "Is my definition the general one, not a narrower part of it?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-q-what-work-explains",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "What the work explained",
+    "action": "Identify what a work described in the passage actually explained, distinguishing how something happens from why.",
+    "check": "Does the work explain how, or why, it operates?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-q-essay-quote",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "question",
+    "title": "Comment on a quotation",
+    "action": "Comment in about 250 words on a memorable statement quoted in the text, including its metaphor.",
+    "check": "Did I discuss the metaphor as well as the obvious point?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-e-bring-information",
+    "level": "elementary",
+    "subtopic": "I. Exercises and Tests at the First Level of Reading: Elementary Reading",
+    "type": "exercise",
+    "title": "Bring what you know",
+    "action": "Bring relevant information you already have to bear on whatever you read; the better informed, the better you read.",
+    "check": "Did I use my background knowledge to understand the text?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-two-steps",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "exercise",
+    "title": "Two steps of inspection",
+    "action": "Do inspectional reading in two steps: first pre-reading or skimming, then superficial reading.",
+    "check": "Did I skim first and read superficially second?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-toc-as-book",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "exercise",
+    "title": "Treat contents as a book",
+    "action": "Treat a table of contents as though it were a book in itself and inspect it systematically.",
+    "check": "Did I read the contents for the structure of the whole work?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-author-note-first",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "exercise",
+    "title": "Read author note first",
+    "action": "Before skimming, read the author's biographical note in a few minutes to see what the author is planning and doing.",
+    "check": "Do I know enough about the author to grasp his plan?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-skim-ten-minutes",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "exercise",
+    "title": "Skim in ten minutes",
+    "action": "Spend less than ten minutes systematically skimming the whole table of contents; here speed is of the essence.",
+    "check": "Did I finish skimming within ten minutes?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-number-of-parts",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Count major parts",
+    "action": "State how many major parts the work is divided into and what they are titled.",
+    "check": "Can I name every major part?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-subdivisions",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Identify subdivisions",
+    "action": "State what the major parts are subdivided into, how many there are, and whether they are equal.",
+    "check": "Did I count the subdivisions in each part?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-principle-of-division",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Principle of division",
+    "action": "Say on what principle each major part seems to be divided.",
+    "check": "What ordering principle do the headings follow?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-direction",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Direction of movement",
+    "action": "Say in which direction the action moves within each major part.",
+    "check": "Do the headings show movement downwards or upwards?",
+    "book_kind": "poem"
+  },
+  {
+    "id": "appb-i-q-locate",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Locate an episode",
+    "action": "Say in which major part of the work a named episode occurs.",
+    "check": "Can I find the heading where it appears?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-superficial-twenty",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "exercise",
+    "title": "Read superficially",
+    "action": "After skimming and answering, take about twenty minutes to read the table of contents superficially.",
+    "check": "Did I read straight through without stopping over difficulties?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-characters",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Who guides whom",
+    "action": "Identify key figures and their roles, such as who guides the protagonist and who sent the guide.",
+    "check": "Can I state each figure's role from the contents?",
+    "book_kind": "story"
+  },
+  {
+    "id": "appb-i-q-main-concern",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Author's main concern",
+    "action": "Say what the author's main concern is in the work.",
+    "check": "Is my answer the concern of the whole work?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-what-kind",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "What kind of work",
+    "action": "Classify what kind of work it is, choosing all fitting descriptions.",
+    "check": "Have I avoided being misled by the title?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-dependence",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Most influential tradition",
+    "action": "Judge which ideology or teaching the work seems most dependent on.",
+    "check": "Which tradition do the contents most reflect?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-symbolism",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Significance of a symbol",
+    "action": "Explain the significance of a symbolic detail or event mentioned in the contents.",
+    "check": "What second meaning does this detail carry?",
+    "book_kind": "poem"
+  },
+  {
+    "id": "appb-i-q-why-event",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Why does this happen",
+    "action": "Explain why a structural event occurs, such as why the travellers reach a particular place or why a guide departs.",
+    "check": "Can I give a reason consistent with the work's scheme?",
+    "book_kind": "poem"
+  },
+  {
+    "id": "appb-i-guess-without-help",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "exercise",
+    "title": "Guess without outside help",
+    "action": "Try to answer the hard symbolism questions from the contents alone, then see how close your guesses are.",
+    "check": "How close were my unaided guesses?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-darwin-timing",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "exercise",
+    "title": "Read bio, then skim",
+    "action": "Read the author's biography quickly, in five or six minutes, then pre-read the contents in no more than ten.",
+    "check": "Did I keep within the time limits?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-scope",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "What the book covers",
+    "action": "Decide true or false whether the book undertakes a given subject, judging scope from the contents.",
+    "check": "Do the chapter headings actually cover that subject?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-chapter-count",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Count the chapters",
+    "action": "State how many chapters the work is divided into.",
+    "check": "Did I count from the contents?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-objections",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Does author face objections",
+    "action": "Decide whether the author takes account of difficulties and objections against his theory.",
+    "check": "Is there a chapter devoted to objections?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-summary-chapter",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Is there a summing up",
+    "action": "Decide whether the book has a chapter summing up its theory and conclusions.",
+    "check": "Does the last chapter recapitulate?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-bio-facts",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Facts from author note",
+    "action": "Answer questions about the author drawn from the biographical note, such as his habits or key life events.",
+    "check": "Can I recall these details from the note?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-evidence-view",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Author's view of evidence",
+    "action": "Say how the author regards a source of data he uses, e.g. complete or incomplete but invaluable.",
+    "check": "Which heading reveals his assessment?",
+    "book_kind": "science"
+  },
+  {
+    "id": "appb-i-q-terms",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Define key terms",
+    "action": "Define the key terms the book turns on, and how they relate to one another.",
+    "check": "Can I state each term's meaning and its relation to the others?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-major-minor",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Major or minor factors",
+    "action": "Judge which factors play a major and which a minor role in the author's theory.",
+    "check": "Do the contents give each factor a chapter or prominent place?",
+    "book_kind": "science"
+  },
+  {
+    "id": "appb-i-q-compare",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Which is greater",
+    "action": "Say which of two things the author compares he thinks greater.",
+    "check": "Which heading states the comparison?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-translate-phrase",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Translate and interpret phrase",
+    "action": "Translate a key phrase appearing in the contents and state its significance for the author's theory.",
+    "check": "Is the sense clear from the contents even without translation?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-significance-factor",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Significance of a factor",
+    "action": "Explain the significance of a factor the contents name for the author's subject.",
+    "check": "Can I tie this factor to the main theory?",
+    "book_kind": "science"
+  },
+  {
+    "id": "appb-i-q-state-problem",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "State the problem",
+    "action": "State fairly exactly, in a sentence or two, the problem the work sets out to solve.",
+    "check": "Is my statement exact and only a sentence or two?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-q-nutshell",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "question",
+    "title": "Theory in a nutshell",
+    "action": "State the author's theory in a nutshell, in no more than 100 words.",
+    "check": "Is it under 100 words and does it cover the whole?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-i-search-better",
+    "level": "inspectional",
+    "subtopic": "II. Exercises and Tests at the Second Level of Reading: Inspectional Reading",
+    "type": "exercise",
+    "title": "Seek better answers",
+    "action": "Let questions you could not answer lead you to search the works themselves for better answers.",
+    "check": "Did I go to the work itself to settle what I could not answer?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-a-four-questions",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Answer the four questions",
+    "action": "Answer the four questions about this book: what it is about, what is said and how, is it true, what of it.",
+    "check": "Can I answer all four questions about this book myself?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-a-judge-yourself",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Be your own judge",
+    "action": "Judge for yourself whether you have answered; no answers are given, they are in the book itself.",
+    "check": "Can I find support for each answer in the book?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-a-alone-with-book",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Work alone",
+    "action": "Apply the rules to the given book yourself, relying on your own thought.",
+    "check": "Did I rely on my own mind rather than outside help?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-a-r1-classify",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Classify this book",
+    "action": "Apply the first rule of structural analysis: classify this book (it is a practical book).",
+    "check": "Have I said what kind of book it is and why?",
+    "book_kind": "all",
+    "stage": 1
+  },
+  {
+    "id": "appb-a-r2-state-briefly",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "State unity briefly",
+    "action": "State what the book is about as a whole more briefly than the authors do in any one place.",
+    "check": "Is my statement shorter than any of the authors' own statements?",
+    "book_kind": "all",
+    "stage": 1
+  },
+  {
+    "id": "appb-a-r3-outline-why",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Outline and explain proportions",
+    "action": "Outline the book's four parts and twenty-one chapters, and explain why each level of reading gets the space it does.",
+    "check": "Can I say why elementary reading is short and analytical reading long?",
+    "book_kind": "all",
+    "stage": 1
+  },
+  {
+    "id": "appb-a-r4-define-problem",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Define the problem precisely",
+    "action": "Define the problem the book sets out to solve with precision; it is not simply teaching you to read.",
+    "check": "Did I describe the particular way and goals of reading, precisely?",
+    "book_kind": "all",
+    "stage": 1
+  },
+  {
+    "id": "appb-a-r5-terms",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Come to terms",
+    "action": "Find the book's terms: the important words you and the authors must understand in common.",
+    "check": "Have I listed the key words and their shared meanings?",
+    "book_kind": "all",
+    "stage": 2
+  },
+  {
+    "id": "appb-a-r6-propositions",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "State propositions",
+    "action": "State the propositions the authors asserted, in your own words.",
+    "check": "Can I restate each key proposition without the authors' wording?",
+    "book_kind": "all",
+    "stage": 2
+  },
+  {
+    "id": "appb-a-r7-arguments",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Construct the arguments",
+    "action": "Construct the book's arguments yourself, without the authors' help.",
+    "check": "Can I lay out the reasoning behind the main claims?",
+    "book_kind": "all",
+    "stage": 2
+  },
+  {
+    "id": "appb-a-r8-solved",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Solved and unsolved problems",
+    "action": "Determine which problems the book solved and which it did not, such as those involving individual differences.",
+    "check": "Can I name a problem the book admits it did not solve?",
+    "book_kind": "all",
+    "stage": 2
+  },
+  {
+    "id": "appb-a-etiquette",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Apply intellectual etiquette",
+    "action": "Before criticising, apply the three general maxims of intellectual etiquette discussed in Chapter 10.",
+    "check": "Have I understood before judging, and disagreed without contentiousness?",
+    "book_kind": "all",
+    "stage": 3
+  },
+  {
+    "id": "appb-a-r12-14-criteria",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Apply the first three criteria",
+    "action": "Apply the first three points of criticism yourself; the authors offer nothing on them.",
+    "check": "Have I judged where, if anywhere, the book is uninformed, misinformed or illogical?",
+    "book_kind": "all",
+    "stage": 3
+  },
+  {
+    "id": "appb-a-r15-incomplete",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Show incompleteness",
+    "action": "Show wherein the book's analysis is incomplete, starting from the authors' own admissions about elementary and syntopical reading.",
+    "check": "Can I name a respect in which the analysis is incomplete?",
+    "book_kind": "all",
+    "stage": 3
+  },
+  {
+    "id": "appb-a-r15-q-intentions",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "question",
+    "title": "First vs second intention",
+    "action": "Ask whether the book distinguishes enough between reading a text and reading a commentary on it.",
+    "check": "Does the book treat commentary-reading separately enough?",
+    "book_kind": "all",
+    "stage": 3
+  },
+  {
+    "id": "appb-a-r15-q-canonical",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "question",
+    "title": "Heretical vs canonical texts",
+    "action": "Ask whether enough is said about reading heretical versus canonical texts, and texts detached from both.",
+    "check": "Is this distinction treated adequately?",
+    "book_kind": "all",
+    "stage": 3
+  },
+  {
+    "id": "appb-a-r15-q-vocab",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "question",
+    "title": "Special vocabularies",
+    "action": "Ask whether enough attention is paid to special vocabularies, especially in science and mathematics, and to lyric poetry.",
+    "check": "Are special vocabularies and lyric poetry covered enough?",
+    "book_kind": "all",
+    "stage": 3
+  },
+  {
+    "id": "appb-a-r15-own-defects",
+    "level": "analytical",
+    "subtopic": "III. Exercises and Tests at the Third Level of Reading: Analytical Reading",
+    "type": "exercise",
+    "title": "Find defects authors miss",
+    "action": "Look for defects or failures in the book that are obvious to you though not to the authors.",
+    "check": "Have I found any omission the authors did not admit?",
+    "book_kind": "all",
+    "stage": 3
+  },
+  {
+    "id": "appb-s-preparatory",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "exercise",
+    "title": "Fix subject and texts",
+    "action": "Take the preparatory step: decide the subject you wish to consider and the texts you will read.",
+    "check": "Have I defined the subject and chosen the texts?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-narrow-question",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "exercise",
+    "title": "Narrow to one question",
+    "action": "Narrow the inquiry to a single question that the texts can answer, framed as alternatives.",
+    "check": "Is my question single and stated so each author can answer it?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-read-carefully",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "exercise",
+    "title": "Read carefully, no hurry",
+    "action": "Read the texts carefully, taking as much time as needed, marking passages and returning as often as you wish.",
+    "check": "Did I go back to the texts while answering?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-identify-types",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Identify author's categories",
+    "action": "Identify the distinct types or categories an author names in the text.",
+    "check": "Can I list each category in the author's terms?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-common-differ",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Common and different",
+    "action": "State what the categories have in common and how they differ.",
+    "check": "Have I stated both the shared features and the differences?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-order-scale",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Order on a scale",
+    "action": "Order the categories on a scale, such as from less to more inclusive.",
+    "check": "Does my ordering follow the text's description?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-degree-or-kind",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Difference of degree or kind",
+    "action": "Ask whether the good one category achieves is the same good in higher degree or a different good altogether.",
+    "check": "Have I decided between degree and kind from the text?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-same-way",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Same in the same way?",
+    "action": "Ask whether things that share a quality share it in the same way.",
+    "check": "Did I distinguish the senses in which each has the quality?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-difficult-remark",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Weigh a troubling remark",
+    "action": "Notice a remark of the author's that raises a difficulty for your interpretation and ask what it implies.",
+    "check": "Does this remark fit my reading or challenge it?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-main-problem",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Author's main problem",
+    "action": "State the main problem the second author poses about the subject.",
+    "check": "Have I stated the problem in neutral terms both authors could address?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-same-problem-other",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Same problem elsewhere?",
+    "action": "Ask whether the author poses the same problem about a related subject.",
+    "check": "Does the author treat the related case differently?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-opposite-term",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Opposite of key term",
+    "action": "Identify what an author takes to be the opposite of a key term.",
+    "check": "What does the author contrast this term with?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-founding-basis",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Basis of legitimacy",
+    "action": "Identify what, for the author, makes the subject legitimate.",
+    "check": "Can I name the author's basis in his own terms?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-reconsider-interpretation",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "exercise",
+    "title": "Test your interpretation",
+    "action": "Having found the authors apparently disagreeing, consider whether that interpretation is correct and what in the texts casts doubt on it.",
+    "check": "Is there anything either author says that undermines my interpretation?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-both-answers",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Both, not either",
+    "action": "Ask whether the author holds that the subject is both of the supposed alternatives.",
+    "check": "Did I check for a 'both' answer before choosing one side?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-other-agrees",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Does the other agree",
+    "action": "Ask whether the other author agrees with that position.",
+    "check": "Have I checked the second author on the same point?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-extend-agreement",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Extend the agreement",
+    "action": "Ask whether the basic agreement between the authors extends to further points.",
+    "check": "What further point do both share, and what key word names it?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-same-meaning",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Same word, same meaning?",
+    "action": "Ask whether a shared key word means the same thing for both authors.",
+    "check": "Does each author mean the same thing by this word?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-q-agree-all",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "question",
+    "title": "Agreement on all points?",
+    "action": "Ask whether agreement on the primary question means the texts agree on all points.",
+    "check": "Have I noted points each raises that the other ignores?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-conclusions",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "exercise",
+    "title": "Draw justified conclusions",
+    "action": "Draw the conclusions about the subject that can justifiably be drawn from careful reading of the texts.",
+    "check": "Does each conclusion follow from the texts read?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-document",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "exercise",
+    "title": "Document from the texts",
+    "action": "Document your answers and conclusions from the authors' own texts, finding the passages that support each.",
+    "check": "Can I cite the passage behind each answer?",
+    "book_kind": "all"
+  },
+  {
+    "id": "appb-s-document-disagreement",
+    "level": "syntopical",
+    "subtopic": "IV. Exercises and Tests at the Fourth Level of Reading: Syntopical Reading",
+    "type": "exercise",
+    "title": "Document disagreement",
+    "action": "If you disagree with an answer or conclusion, document your disagreement with the authors' own words.",
+    "check": "Have I backed my disagreement with quotations from the authors?",
+    "book_kind": "all"
+  }
+]
