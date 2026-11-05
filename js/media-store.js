@@ -113,6 +113,32 @@
   }
 
   /**
+   * A picture on a pool site: found through the index, stored as an RQE1
+   * file under the subject key (see tools/site/opaque.py).
+   * @param {object} pool  window.RecallQuizPool
+   * @param {string} path  the picture's name inside the book
+   * @param {object} entry  { id, type }
+   * @returns {Promise<string|null>}
+   */
+  async function openFromPool(pool, path, entry) {
+    try {
+      await pool.ready();
+      const response = await fetch(pool.addressOf(path));
+      if (!response.ok) {
+        reasons.set(entry.id, "file not found (HTTP " + response.status + ")");
+        return null;
+      }
+      const plain = await window.SubjectUnlock.decrypt(
+        await response.arrayBuffer(), window.RecallQuizSubjectKey);
+      return URL.createObjectURL(
+        new Blob([plain], { type: entry.type || "image/webp" }));
+    } catch (error) {
+      reasons.set(entry.id, error.message);
+      return null;
+    }
+  }
+
+  /**
    * Fetch and decrypt one file into an object URL.
    * @param {object} entry  { id, type }
    * @returns {Promise<string|null>}
@@ -124,6 +150,10 @@
       return null;
     }
     const base = (quiz.book.data && quiz.book.data.mediaBase) || "media/";
+    const pool = window.RecallQuizPool;
+    if (pool && pool.enabled) {
+      return openFromPool(pool, base + entry.id + ".enc", entry);
+    }
     const response = await fetch(base + entry.id + ".enc");
     if (!response.ok) {
       reasons.set(entry.id, "file not found (HTTP " + response.status +

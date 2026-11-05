@@ -135,6 +135,42 @@ def make_pages(tag, title, views=("read", "quiz")):
     return pages
 
 
+POOL_PAGES = {"read": "r.html", "quiz": "q.html"}
+POOL_META = '\n<meta name="pool-index" content="index.enc">'
+POOL_SCRIPT = '\n<script src="{base}/js/pool-files.js"></script>'
+
+
+def make_pool_pages(tag):
+    """The two pages of a site whose files all sit under opaque names:
+    r.html (reader) and q.html (quiz), opened as r.html?b=<book id>.
+
+    They carry no title and no book name; the reader and the quiz set
+    their own title once the reader has signed in and the encrypted index
+    (index.enc) has been read (js/pool-files.js). There is no gate page:
+    the hub (index.html) is the shelf.
+
+    @param tag: exact template tag, for example 3.4.0
+    @return: {file name: text}
+    """
+    base = cdn_base(tag)
+    failure = FAILURE.format()
+
+    def head(extra):
+        text = HEAD.format(tag=tag, base=base, title="Loading", extra=extra)
+        return text.replace("</script>\n</head>", "</script>" +
+                            POOL_SCRIPT.format(base=base) + "\n</head>", 1)
+
+    return {
+        POOL_PAGES["read"]: head(
+            POOL_META + f'\n<link rel="stylesheet" href="{base}/reader/'
+            'style.css">') + READ_BODY.format(base=base, failure=failure),
+        POOL_PAGES["quiz"]: head(
+            POOL_META + "\n<script>window.RecallQuizEncrypted = "
+            '{ questions: "' + QUESTIONS_FILE + '" };</script>'
+        ) + QUIZ_BODY.format(base=base, failure=failure),
+    }
+
+
 def main():
     """Write the pages."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])

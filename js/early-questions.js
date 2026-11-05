@@ -37,16 +37,28 @@
    */
   function fetchEncryptedQuestions() {
     const unlock = window.SubjectUnlock;
-    return unlock.ready().then(function download(unlocked) {
-      return fetch(window.RecallQuizEncrypted.questions,
-        { cache: "no-cache" }).then(function read(response) {
-        if (!response.ok) {
-          throw new Error("HTTP " + response.status);
-        }
-        return response.arrayBuffer();
-      }).then(function open(buffer) {
-        return unlock.decrypt(buffer, unlocked.key);
-      });
+    const pool = window.RecallQuizPool;
+    return unlock.ready().then(function find(unlocked) {
+      // a pool site names the file through its encrypted index
+      return (pool && pool.enabled ? pool.ready() : Promise.resolve())
+        .then(function address() {
+          return {
+            unlocked: unlocked,
+            address: pool && pool.enabled ?
+              pool.addressOf(window.RecallQuizEncrypted.questions) :
+              window.RecallQuizEncrypted.questions,
+          };
+        });
+    }).then(function download(found) {
+      return fetch(found.address, { cache: "no-cache" })
+        .then(function read(response) {
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+          return response.arrayBuffer();
+        }).then(function open(buffer) {
+          return unlock.decrypt(buffer, found.unlocked.key);
+        });
     }).then(function parse(bytes) {
       return JSON.parse(new TextDecoder().decode(bytes));
     });

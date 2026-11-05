@@ -49,6 +49,10 @@ env:
   # An exact tag of eckko/item-ui such as 3.1.0: no "v",
   # never a branch.
   TEMPLATE_TAG: 3.1.0
+  # "pool": every file of the subject site sits under an opaque name and the
+  # book list is encrypted (the subject repo then names no book).
+  # "folders": the older layout, one readable folder per book.
+  SITE_LAYOUT: pool
 
 jobs:
   publish:
@@ -120,4 +124,11 @@ jobs:
 
       - name: Publish
         if: steps.setup.outputs.skip != 'true'
-        run: template/tools/site/publish_book.sh "$RUNNER_TEMP/site" "$BOOK_FOLDER" subject
+        env:
+          SUBJECT_KEY: ${{ secrets.SUBJECT_KEY }}
+        run: |
+          if [ "$SITE_LAYOUT" = "pool" ]; then
+            template/tools/site/publish_pool.sh "$RUNNER_TEMP/site" subject
+          else
+            template/tools/site/publish_book.sh "$RUNNER_TEMP/site" "$BOOK_FOLDER" subject
+          fi
