@@ -2926,16 +2926,16 @@ def test_template_v2_fields(browser):
 
 
 def test_firebase_key_rules_and_adapter():
-    """The rules let only the owner read users/<uid>/subjects/<subject>
+    """The rules let only the owner read users/<uid>/groups/<subject>
     (the subject key) and let nobody write it; the adapter has no
     per-book key reader any more."""
     print("Firebase key rules")
     rules = (SITE_FOLDER / "js/sync/providers/firebase-firestore.rules"
              ).read_text()
     check("the old mediaKeys path is gone", "mediaKeys" not in rules)
-    check("rules have a subjects block",
-          "users/{userId}/subjects/{subject}" in rules)
-    block = rules[rules.index("/subjects/"):]
+    check("rules have a groups block",
+          "users/{userId}/groups/{subject}" in rules)
+    block = rules[rules.index("/groups/"):]
     check("only the owner may read the key",
           "request.auth.uid == userId" in block)
     check("nobody may write the key from the page",

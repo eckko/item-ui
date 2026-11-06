@@ -9,7 +9,7 @@
  *   1. the address (#key=...), which is removed from it straight away;
  *   2. this tab's sessionStorage (it keeps the key between pages);
  *   3. the signed-in reader's own account: the Firestore document
- *        users/<uid>/subjects/<subject>   field "key"
+ *        users/<uid>/groups/<subject>   field "key"
  *      (64 hex characters, or 32 bytes in base64). <subject> is the
  *      subject name = the repo name, read from the address
  *      (<owner>.github.io/<subject>/...). The author creates it by hand;
@@ -169,14 +169,14 @@
     let snapshot;
     try {
       snapshot = await firebase.store.getDoc(firebase.store.doc(
-        firebase.db, "users", user.uid, "subjects", subject));
+        firebase.db, "users", user.uid, "groups", subject));
     } catch (problem) {
       throw new Error("This account is not allowed to read the key (" +
         (problem.code || problem.message) + ").");
     }
     if (!snapshot.exists()) {
       throw new Error((user.email || "This account") + " has no key yet." +
-        " Add the document users/" + user.uid + "/subjects/" +
+        " Add the document users/" + user.uid + "/groups/" +
         subject + " in Firestore.");
     }
     const bytes = parseKey(snapshot.data().key);
