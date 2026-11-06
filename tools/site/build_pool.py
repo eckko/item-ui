@@ -15,7 +15,8 @@ and writes, in SITE:
                   names to pool paths
     r.html q.html the reader and the quiz pages (opened as r.html#b=<id>);
                   they name no book
-    boot.json     templateTag, uiVersion and the sign-in theme: nothing else
+    boot.json     the sign-in theme: nothing else
+    item-version  the exact item UI tag; group-version: the hub UI version
 
 A file whose content did not change keeps its name and is left alone.
 Books already in the site's index.enc and not named on the command line are
@@ -38,7 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import opaque  # noqa: E402
 
 TEXT_FILES = ("data/", "quiz/questions.enc")
-SUBJECT_PUBLIC_KEYS = ("templateTag", "uiVersion", "theme")
+SUBJECT_PUBLIC_KEYS = ("templateTag", "uiVersion", "theme")   # never in index.enc
 
 
 def read_plain(key, path, own_name):
@@ -130,8 +131,15 @@ def starting_settings(site, key):
     if (site / opaque.INDEX_NAME).is_file():
         settings.update(opaque.read_index(site, key).get("subject", {}))
     if (site / opaque.BOOT_NAME).is_file():
+        # an older site kept its versions here; the files below win
         settings.update(json.loads(
             (site / opaque.BOOT_NAME).read_text(encoding="utf-8")))
+    item = opaque.read_version(site, opaque.ITEM_VERSION_NAME)
+    group = opaque.read_version(site, opaque.GROUP_VERSION_NAME)
+    if item:
+        settings["templateTag"] = item
+    if group:
+        settings["uiVersion"] = group
     return settings
 
 
@@ -140,7 +148,7 @@ def main(argv=None):
     parser.add_argument("--key", help="key file (hex/base64); default: "
                         "the environment variable SUBJECT_KEY")
     parser.add_argument("--template-tag", help="write this exact tag to "
-                        "boot.json and into r.html and q.html")
+                        "item-version and into r.html and q.html")
     parser.add_argument("--site", required=True, help="the site folder")
     parser.add_argument("--no-sweep", action="store_true")
     parser.add_argument("--remove", action="append", default=[],
@@ -185,8 +193,12 @@ def main(argv=None):
         import make_subject_pages
         for name, text in make_subject_pages.make_pool_pages(tag).items():
             (site / name).write_text(text, encoding="utf-8")
-    opaque.write_boot(site, subject.get("templateTag"),
-                      subject.get("uiVersion"), subject.get("theme"))
+    opaque.write_boot(site, subject.get("theme"))
+    if tag:
+        opaque.write_version(site, opaque.ITEM_VERSION_NAME, tag)
+    if subject.get("uiVersion"):
+        opaque.write_version(site, opaque.GROUP_VERSION_NAME,
+                             subject["uiVersion"])
     # the settings now live in index.enc and boot.json; a readable
     # subject.json would still name the subject
     (site / "subject.json").unlink(missing_ok=True)

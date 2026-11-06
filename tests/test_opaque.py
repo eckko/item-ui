@@ -108,7 +108,8 @@ class PoolTests(OpaqueCase):
         names = {p.name for p in self.site.iterdir()}
         shards = {n for n in names if re.fullmatch("[0-9a-f]{2}", n)}
         self.assertEqual(names - shards, {
-            "index.enc", "boot.json", "r.html", "q.html"})
+            "index.enc", "boot.json", "r.html", "q.html",
+            "item-version", "group-version"})
         for ref in self.pool_files():
             self.assertRegex(ref, opaque.REF_PATTERN)
             self.assertNotIn("alpha", ref)
@@ -116,7 +117,9 @@ class PoolTests(OpaqueCase):
     def test_boot_json_holds_no_book_or_subject_name(self):
         self.run_build()
         boot = json.loads((self.site / "boot.json").read_text())
-        self.assertEqual(sorted(boot), ["templateTag", "theme", "uiVersion"])
+        self.assertEqual(sorted(boot), ["theme"])
+        self.assertEqual(opaque.read_version(self.site, "item-version"), "3.4.0")
+        self.assertEqual(opaque.read_version(self.site, "group-version"), "2")
         text = (self.site / "boot.json").read_text()
         for word in ("My Subject", "Alpha"):
             self.assertNotIn(word, text)
@@ -188,15 +191,14 @@ class PoolTests(OpaqueCase):
         index = opaque.read_index(self.site, KEY)
         self.assertEqual(index["subject"], {"title": "My Subject"})
         boot = json.loads((self.site / "boot.json").read_text())
-        self.assertEqual(boot["templateTag"], "3.4.0")
-        self.assertEqual(boot["theme"], {"name": "plain"})
+        self.assertEqual(opaque.read_version(self.site, "item-version"), "3.4.0")
+        self.assertEqual(boot, {"theme": {"name": "plain"}})
 
     def test_template_tag_option_updates_boot_and_pages(self):
         self.run_build()
         build_pool.main(["--key", str(self.keyfile), "--site",
                          str(self.site), "--template-tag", "3.5.0"])
-        self.assertEqual(json.loads(
-            (self.site / "boot.json").read_text())["templateTag"], "3.5.0")
+        self.assertEqual(opaque.read_version(self.site, "item-version"), "3.5.0")
         self.assertIn("@3.5.0/js/pool-files.js",
                       (self.site / "r.html").read_text())
 
@@ -392,9 +394,28 @@ class CheckSiteTests(OpaqueCase):
 
     def test_boot_json_with_a_title_fails(self):
         (self.site / "boot.json").write_text(
-            '{"templateTag": "3.4.0", "title": "x"}')
+            '{"theme": {}, "title": "x"}')
         code, problems = self.problems()
         self.assertTrue(any("boot.json may hold only" in p for p in problems))
+
+    def test_a_bad_version_file_fails(self):
+        (self.site / "item-version").write_text("3\n")
+        (self.site / "group-version").write_text("main\n")
+        code, problems = self.problems()
+        self.assertTrue(any("item-version must hold" in p for p in problems))
+        self.assertTrue(any("group-version must hold" in p for p in problems))
+
+    def test_an_older_site_with_versions_in_boot_json_is_still_valid_and_migrates(self):
+        (self.site / "item-version").unlink()
+        (self.site / "group-version").unlink()
+        (self.site / "boot.json").write_text(
+            '{"templateTag": "3.4.0", "uiVersion": "2"}')
+        code, problems = self.problems()
+        self.assertEqual(problems, [])
+        build_pool.main(["--key", str(self.keyfile), "--site", str(self.site)])
+        self.assertEqual(opaque.read_version(self.site, "item-version"), "3.4.0")
+        self.assertEqual(opaque.read_version(self.site, "group-version"), "2")
+        self.assertEqual(json.loads((self.site / "boot.json").read_text()), {})
 
     def test_a_file_made_with_another_key_fails(self):
         ref = self.pool_files()[0]

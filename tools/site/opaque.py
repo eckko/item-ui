@@ -46,6 +46,8 @@ ID_CHARS = 32
 POOL_EXTENSION = ".bin"
 INDEX_NAME = "index.enc"
 BOOT_NAME = "boot.json"
+ITEM_VERSION_NAME = "item-version"    # exact tag of the item UI (reader, quiz, tools)
+GROUP_VERSION_NAME = "group-version"  # which hub UI to load ("3" = newest 3.x.x)
 INDEX_FORMAT = 2
 REF_PATTERN = re.compile(r"^[0-9a-f]{2}/[0-9a-f]{%d}\.bin$" % (ID_CHARS - 2))
 
@@ -235,16 +237,34 @@ def build_index(subject, books):
     return {"format": INDEX_FORMAT, "subject": subject, "books": books}
 
 
-def write_boot(root, template_tag, ui_version, theme=None):
-    """Write boot.json, the only readable settings file.
+def read_version(root, name):
+    """One version file's value, or "" when it is missing.
 
     @param root: the site root
-    @param template_tag: exact tag of the item UI, such as "3.3.0"
-    @param ui_version: which hub UI to load ("2" means newest 2.x.x)
+    @param name: ITEM_VERSION_NAME or GROUP_VERSION_NAME
+    @return: the first line, stripped
+    """
+    path = Path(root) / name
+    if not path.is_file():
+        return ""
+    lines = path.read_text(encoding="utf-8").strip().splitlines()
+    return lines[0].strip() if lines else ""
+
+
+def write_version(root, name, value):
+    """Write a version file: the value and a newline, nothing else."""
+    (Path(root) / name).write_text(str(value).strip() + "\n", encoding="utf-8")
+
+
+def write_boot(root, theme=None):
+    """Write boot.json, the only readable settings file. The two versions
+    live in their own files (item-version, group-version).
+
+    @param root: the site root
     @param theme: the sign-in look (the subject.json "theme" object), or
         None; it names colours and art, never a book
     """
-    boot = {"templateTag": template_tag, "uiVersion": ui_version}
+    boot = {}
     if theme:
         boot["theme"] = theme
     text = json.dumps(boot, indent=2) + "\n"

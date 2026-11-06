@@ -17,7 +17,8 @@ Always checked (no key needed):
     two-character folders of the pool;
   * a pool folder holds only <30 hex characters>.bin files, each an RQE1
     file that looks like random data (no readable text inside);
-  * boot.json holds only templateTag, uiVersion and theme.
+  * boot.json holds only theme (an older site may still hold templateTag
+    and uiVersion there); the versions are in item-version and group-version.
 
 With the subject key (environment variable named by --key-env, 64 hex
 characters or base64) it also:
@@ -46,7 +47,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import opaque  # noqa: E402
 
 ROOT_FILES = {"index.html", "boot.json", "index.enc", "r.html", "q.html",
-              ".nojekyll", "CNAME", ".gitignore"}
+              "item-version", "group-version", ".nojekyll", "CNAME", ".gitignore"}
+ITEM_VERSION = re.compile(r"^\d+\.\d+\.\d+$")
+GROUP_VERSION = re.compile(r"^\d+(\.\d+){0,2}$")
 ROOT_FOLDERS = {".github", ".theme", ".git"}
 BOOT_KEYS = {"templateTag", "uiVersion", "theme"}
 THEME_SUFFIXES = {".svg", ".png", ".jpg", ".jpeg", ".webp", ".css",
@@ -116,6 +119,20 @@ def check_layout(site):
                     ", ".join(sorted(BOOT_KEYS)), ", ".join(sorted(extra))))
     else:
         problems.append("boot.json is missing")
+    for name, pattern, what in (
+            (opaque.ITEM_VERSION_NAME, ITEM_VERSION, "an exact tag such as 3.4.0"),
+            (opaque.GROUP_VERSION_NAME, GROUP_VERSION, "a version such as 3 or 3.1.0")):
+        value = opaque.read_version(site, name)
+        if (site / name).is_file() and not pattern.match(value):
+            problems.append("%s must hold %s" % (name, what))
+    legacy_tag = False
+    if boot.is_file():
+        try:
+            legacy_tag = "templateTag" in json.loads(boot.read_text("utf-8"))
+        except ValueError:
+            pass
+    if not (site / opaque.ITEM_VERSION_NAME).is_file() and not legacy_tag:
+        problems.append("item-version is missing")
     if not (site / opaque.INDEX_NAME).is_file():
         problems.append("index.enc is missing")
     else:

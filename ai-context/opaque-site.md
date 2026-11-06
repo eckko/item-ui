@@ -10,7 +10,10 @@ the browser, `js/pool-files.js`.
 
 ```
 index.html      the hub loader (group-ui README); names nothing
-boot.json       templateTag, uiVersion, theme; nothing else
+boot.json       theme (sign-in look); nothing else
+item-version    exact item UI tag, one line (written by build_pool.py)
+group-version   hub UI version, one line, "3" = newest 3.x.x (set by hand or by
+                the release action of the group template)
 index.enc       encrypted index: subject settings + every book
 r.html q.html   reader and quiz pages, opened as r.html#b=<book id>
 .theme/         sign-in pictures and styles (no book names)

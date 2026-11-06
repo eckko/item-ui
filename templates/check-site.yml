@@ -12,7 +12,7 @@
 #
 # Needs the repo secret SUBJECT_KEY (the subject key, 64 hex characters or
 # base64). Without it only the checks that need no key run, and the job says
-# so. The checker comes from the item UI at the tag named in boot.json.
+# so. The checker comes from the item UI at the tag in the file item-version.
 name: check
 
 on:
@@ -31,8 +31,8 @@ jobs:
           fetch-depth: 0
       - name: Fetch the checker
         run: |
-          tag=$(python3 -c "import json; print(json.load(open('boot.json'))['templateTag'])")
-          case "$tag" in ''|*[!0-9.]*) echo "boot.json templateTag must be an exact tag"; exit 1;; esac
+          tag=$(head -n1 item-version | tr -d '[:space:]')
+          case "$tag" in ''|*[!0-9.]*) echo "item-version must hold an exact tag"; exit 1;; esac
           git clone --quiet --depth 1 --branch "$tag" https://github.com/eckko/item-ui "$RUNNER_TEMP/ui"
           pip install --quiet cryptography
       - name: Check the site
