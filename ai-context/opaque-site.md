@@ -17,7 +17,7 @@ boot.json       theme (sign-in look); nothing else
 index.enc       encrypted index: subject settings + every book
 r.html q.html   reader and quiz pages, opened as r.html#b=<book id>
 .theme/         sign-in pictures and styles (no book names)
-xx/<30 hex>.bin the pool: one flat set of files, 256 shards at most
+bin/xx/<30 hex>.bin the pool: one flat set of files under bin/, 256 shards at most
 .github/workflows/  check-site.yml, fork-warning.yml, no book names
 ```
 
