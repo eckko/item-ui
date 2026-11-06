@@ -28,15 +28,14 @@ follows them across devices. Off by default.
   `recallquiz:theme-changed` and keeps the newest choice, layout, question flags and idea flags in a
   per-book `_settings:<bookId>` document of the account (see `ai-context/data-formats.md`).
 
-## Secret pictures (template v2)
+## Pictures
 
-A book with encrypted media (`media/<id>.enc`) needs its book key. The
-adapter's optional `readMediaKey(userId, bookId)` returns the key (base64)
-or `null`; cloud-sync.js hands it to `RecallQuiz.media.setKeyProvider`
-when someone signs in, and removes it on sign-out. The Firebase adapter
-reads `users/<uid>/mediaKeys/<book id>` (field `key`); the author creates
-that document by hand in the console, and the rules let only that account
-read it and nobody write it. Without a key, pictures show their words.
+A book's own pictures are plain files (`media/<id>.<ext>`), so sync has
+nothing to do with them. On an encrypted subject site the pictures are
+opened with the subject key, which `js/unlock.js` gets (typed in, or read
+from `users/<uid>/mediaKeys/<key document>` in Firestore) and
+`js/encrypted-book.js` hands to `RecallQuiz.media.setKeyProvider`. Sync
+adapters have no part in it.
 
 Sync never changes how the quiz works when it is off or the reader is
 signed out.

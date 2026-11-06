@@ -41,7 +41,7 @@ adds one namespace to it (`js/theme-picker.js` is separate: it runs in
 | Namespace | File | Owns |
 |---|---|---|
 | `quiz.helpers` | helpers.js | `findElement`, `createElement`, `createButton`, `createCheckButton`, `createParagraph`, `shuffledCopy`, `countWithWord`, `formatOneDecimal`, `readWholeNumber`, `prefersReducedMotion` |
-| `quiz.media` | media-store.js | `load(entry)`, `prefetch(entries)`, `setKeyProvider(fn)`: opens encrypted pictures and clips; gives null (so the text shows) without a key. cloud-sync.js sets the provider from the adapter's `readMediaKey` on sign-in and clears it on sign-out; figures retry on `recallquiz:media-key-changed` |
+| `quiz.media` | media-store.js | `load(entry)`, `prefetch(entries)`, `setKeyProvider(fn)`: shows the book's plain `media/<id>.<ext>` files; on an encrypted site (provider set by encrypted-book.js with the subject key) opens `<id>.enc` instead and gives null (so the text shows) when it cannot. Figures retry on `recallquiz:media-key-changed` |
 | `quiz.rich` | rich-content.js | `createCode`, `createMedia`, `appendExtras`, `createBlocks`, `createGenreChip`: the v2 card and question extras |
 | `quiz.book` | book.js | the loaded `questions.json` (`data`), `labels`, `unitIds`, `unitTitles`; `setBookData`, `allQuestions`, `bookId`, `unitShortName`, `unitFullName`, `questionsInUnit` |
 | `quiz.progress` | progress-storage.js | `saved` (the progress object), `openForBook`, `saveProgress`, `replaceProgress`, `eraseProgress`, `looksLikeProgress`; version upgrades |
@@ -239,8 +239,7 @@ and publishes `window.RecallQuizSubjectKey` (CryptoKey, AES-GCM) and
 `window.RecallQuizEncrypted = { questions: "quiz/questions.enc" }`,
 `js/early-questions.js` waits for the key, fetches and decrypts that file
 (RQE1 format, see `tools/book_build/encfmt.py`). `js/encrypted-book.js`
-hands the base64 key to `media-store.js`, and `cloud-sync.js` then leaves
-the picture key alone. `reader/app.js` is the reader; it also calls
+hands the base64 key to `media-store.js`. `reader/app.js` is the reader; it also calls
 `SubjectUnlock.ready()`.
 
 Building the encrypted book (`tools/book_build/`): `extract_epub.py` cuts

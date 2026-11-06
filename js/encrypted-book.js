@@ -5,8 +5,8 @@
  * pictures with the same key as everything else. On any other site it
  * does nothing.
  *
- * The key is only in memory; cloud-sync.js leaves the picture key alone
- * when this is in use (see connectMediaKey there).
+ * The key is only in memory. A site without it shows the book's own plain
+ * pictures (see js/media-store.js).
  */
 (function useSubjectKeyForPictures(quiz) {
   "use strict";
