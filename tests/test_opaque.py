@@ -301,6 +301,18 @@ class PagesAndBrowserCodeTests(OpaqueCase):
                          '{"questions": []}')
 
 
+class RekeyTests(OpaqueCase):
+    def test_another_key_stops_with_a_clear_message(self):
+        self.run_build()
+        other = self.site.parent / "other.key"
+        other.write_text(("ab" * 32))
+        with self.assertRaises(SystemExit) as caught:
+            build_pool.main(["--key", str(other), "--site", str(self.site),
+                             str(self.book)])
+        self.assertIn("another key", str(caught.exception))
+        self.assertIn("reset", str(caught.exception))
+
+
 class CheckSiteTests(OpaqueCase):
     def setUp(self):
         super().setUp()
@@ -322,6 +334,20 @@ class CheckSiteTests(OpaqueCase):
             code = self.check(*extra)
         return code, [l for l in out.getvalue().splitlines()
                       if l.startswith("PROBLEM")]
+
+    def test_key_doc_meta_may_name_the_subject(self):
+        import os
+        index = opaque.read_index(self.site, KEY)
+        name = index["books"][0]["repo"]
+        (self.site / "index.html").write_text(
+            '<html><head><meta name="key-doc" content="%s"></head></html>'
+            % name)
+        code, problems = self.problems()
+        self.assertEqual((code, problems), (0, []))
+        (self.site / "index.html").write_text(
+            "<html><body>%s</body></html>" % name)
+        code, problems = self.problems()
+        self.assertEqual(code, 1)
 
     def test_a_clean_site_passes(self):
         code, problems = self.problems()

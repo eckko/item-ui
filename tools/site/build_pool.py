@@ -131,6 +131,25 @@ def with_random_id(entry):
     return upgraded
 
 
+
+def read_existing_index(site, key):
+    """The index already in the site, with a clear stop when it was made
+    with a different key (a subject that is being re-keyed).
+
+    @return: the decrypted index
+    """
+    try:
+        return opaque.read_index(site, key)
+    except Exception as error:
+        raise SystemExit(
+            "index.enc in this subject site cannot be read with the "
+            "subject key given (%s). The site was made with another key. "
+            "To change a subject's key, run Update subject with 'reset' "
+            "on, which clears index.enc and the pool; every book is then "
+            "published again (book ids, and so reader progress, restart)."
+            % type(error).__name__)
+
+
 def starting_settings(site, key):
     """The subject's settings: subject.json when the site still has it
     (first conversion), otherwise what the last run wrote (the index's
@@ -143,7 +162,7 @@ def starting_settings(site, key):
         return json.loads((site / "subject.json").read_text(encoding="utf-8"))
     settings = {}
     if (site / opaque.INDEX_NAME).is_file():
-        settings.update(opaque.read_index(site, key).get("subject", {}))
+        settings.update(read_existing_index(site, key).get("subject", {}))
     if (site / opaque.BOOT_NAME).is_file():
         # an older site kept its versions here; the files below win
         settings.update(json.loads(
@@ -183,7 +202,7 @@ def main(argv=None):
     before = []
     if (site / opaque.INDEX_NAME).is_file():
         before = [with_random_id(e) for e in
-                  opaque.read_index(site, key)["books"]]
+                  read_existing_index(site, key)["books"]]
     ids = {e["repo"]: e["id"] for e in before}
     for entry in entries:
         # a book that is already in the index keeps its id for good

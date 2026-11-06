@@ -48,7 +48,7 @@ holds only ciphertext and tiny pages:
 | `quiz/questions.enc` (or `quiz/q/*.enc`, one per unit, on a pool site), `quiz/media/` | the quiz's questions and pictures, same key |
 
 `js/unlock.js` gets the key (sign in with Google and read
-`users/<uid>/mediaKeys/subject`, or paste it) before either view starts,
+`users/<uid>/subjects/<subject>` (subject = repo name), or paste it) before either view starts,
 and keeps it for the tab. `tools/book_build/build_book.py` builds a book
 folder from a private book repo (EPUB, notes EPUB, `questions.json`);
 `tools/make_subject_pages.py` writes the three pages. `tools/site/` holds the tools for the subject site itself (`build_hub.py`,

@@ -33,7 +33,7 @@ follows them across devices. Off by default.
 A book's own pictures are plain files (`media/<id>.<ext>`), so sync has
 nothing to do with them. On an encrypted subject site the pictures are
 opened with the subject key, which `js/unlock.js` gets (typed in, or read
-from `users/<uid>/mediaKeys/<key document>` in Firestore) and
+from `users/<uid>/subjects/<subject>` (subject = repo name) in Firestore) and
 `js/encrypted-book.js` hands to `RecallQuiz.media.setKeyProvider`. Sync
 adapters have no part in it.
 
