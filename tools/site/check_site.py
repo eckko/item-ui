@@ -12,13 +12,14 @@ and make it a required check, so a bad file cannot be merged.
 
 Always checked (no key needed):
   * only these top-level items exist: index.html, boot.json, index.enc,
-    r.html, q.html, .nojekyll, CNAME, .gitignore, .github/workflows/*.yml,
+    r.html, q.html, .itemrc, .grouprc, .nojekyll, CNAME, .gitignore,
+    README.md, CLAUDE.md, .github/workflows/*.yml,
     .theme/ (pictures and styles for the sign-in page only) and the
     two-character folders of the pool;
   * a pool folder holds only <30 hex characters>.bin files, each an RQE1
     file that looks like random data (no readable text inside);
   * boot.json holds only theme (an older site may still hold templateTag
-    and uiVersion there); the versions are in item-version and group-version.
+    and uiVersion there); the versions are in .itemrc and .grouprc.
 
 With the subject key (environment variable named by --key-env, 64 hex
 characters or base64) it also:
@@ -47,7 +48,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import opaque  # noqa: E402
 
 ROOT_FILES = {"index.html", "boot.json", "index.enc", "r.html", "q.html",
-              "item-version", "group-version", ".nojekyll", "CNAME", ".gitignore"}
+              ".itemrc", ".grouprc", ".nojekyll", "CNAME", ".gitignore",
+              "README.md", "CLAUDE.md"}
 ITEM_VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 GROUP_VERSION = re.compile(r"^\d+(\.\d+){0,2}$")
 ROOT_FOLDERS = {".github", ".theme", ".git"}
@@ -125,6 +127,9 @@ def check_layout(site):
         value = opaque.read_version(site, name)
         if (site / name).is_file() and not pattern.match(value):
             problems.append("%s must hold %s" % (name, what))
+    if (site / opaque.GROUP_VERSION_NAME).is_file() and not (site / ".nojekyll").is_file():
+        problems.append(".nojekyll is missing: GitHub Pages would hide .grouprc "
+                        "and .itemrc, and the hub could not start")
     legacy_tag = False
     if boot.is_file():
         try:
@@ -132,7 +137,7 @@ def check_layout(site):
         except ValueError:
             pass
     if not (site / opaque.ITEM_VERSION_NAME).is_file() and not legacy_tag:
-        problems.append("item-version is missing")
+        problems.append(".itemrc is missing")
     if not (site / opaque.INDEX_NAME).is_file():
         problems.append("index.enc is missing")
     else:

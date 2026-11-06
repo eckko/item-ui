@@ -46,8 +46,8 @@ ID_CHARS = 32
 POOL_EXTENSION = ".bin"
 INDEX_NAME = "index.enc"
 BOOT_NAME = "boot.json"
-ITEM_VERSION_NAME = "item-version"    # exact tag of the item UI (reader, quiz, tools)
-GROUP_VERSION_NAME = "group-version"  # which hub UI to load ("3" = newest 3.x.x)
+ITEM_VERSION_NAME = ".itemrc"    # exact tag of the item UI (reader, quiz, tools)
+GROUP_VERSION_NAME = ".grouprc"  # which hub UI to load ("3" = newest 3.x.x)
 INDEX_FORMAT = 2
 REF_PATTERN = re.compile(r"^[0-9a-f]{2}/[0-9a-f]{%d}\.bin$" % (ID_CHARS - 2))
 
@@ -258,7 +258,7 @@ def write_version(root, name, value):
 
 def write_boot(root, theme=None):
     """Write boot.json, the only readable settings file. The two versions
-    live in their own files (item-version, group-version).
+    live in their own files (.itemrc, .grouprc).
 
     @param root: the site root
     @param theme: the sign-in look (the subject.json "theme" object), or

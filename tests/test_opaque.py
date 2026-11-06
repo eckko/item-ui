@@ -109,7 +109,7 @@ class PoolTests(OpaqueCase):
         shards = {n for n in names if re.fullmatch("[0-9a-f]{2}", n)}
         self.assertEqual(names - shards, {
             "index.enc", "boot.json", "r.html", "q.html",
-            "item-version", "group-version"})
+            ".itemrc", ".grouprc", ".nojekyll"})
         for ref in self.pool_files():
             self.assertRegex(ref, opaque.REF_PATTERN)
             self.assertNotIn("alpha", ref)
@@ -118,8 +118,8 @@ class PoolTests(OpaqueCase):
         self.run_build()
         boot = json.loads((self.site / "boot.json").read_text())
         self.assertEqual(sorted(boot), ["theme"])
-        self.assertEqual(opaque.read_version(self.site, "item-version"), "3.4.0")
-        self.assertEqual(opaque.read_version(self.site, "group-version"), "2")
+        self.assertEqual(opaque.read_version(self.site, ".itemrc"), "3.4.0")
+        self.assertEqual(opaque.read_version(self.site, ".grouprc"), "2")
         text = (self.site / "boot.json").read_text()
         for word in ("My Subject", "Alpha"):
             self.assertNotIn(word, text)
@@ -191,14 +191,14 @@ class PoolTests(OpaqueCase):
         index = opaque.read_index(self.site, KEY)
         self.assertEqual(index["subject"], {"title": "My Subject"})
         boot = json.loads((self.site / "boot.json").read_text())
-        self.assertEqual(opaque.read_version(self.site, "item-version"), "3.4.0")
+        self.assertEqual(opaque.read_version(self.site, ".itemrc"), "3.4.0")
         self.assertEqual(boot, {"theme": {"name": "plain"}})
 
     def test_template_tag_option_updates_boot_and_pages(self):
         self.run_build()
         build_pool.main(["--key", str(self.keyfile), "--site",
                          str(self.site), "--template-tag", "3.5.0"])
-        self.assertEqual(opaque.read_version(self.site, "item-version"), "3.5.0")
+        self.assertEqual(opaque.read_version(self.site, ".itemrc"), "3.5.0")
         self.assertIn("@3.5.0/js/pool-files.js",
                       (self.site / "r.html").read_text())
 
@@ -399,23 +399,37 @@ class CheckSiteTests(OpaqueCase):
         self.assertTrue(any("boot.json may hold only" in p for p in problems))
 
     def test_a_bad_version_file_fails(self):
-        (self.site / "item-version").write_text("3\n")
-        (self.site / "group-version").write_text("main\n")
+        (self.site / ".itemrc").write_text("3\n")
+        (self.site / ".grouprc").write_text("main\n")
         code, problems = self.problems()
-        self.assertTrue(any("item-version must hold" in p for p in problems))
-        self.assertTrue(any("group-version must hold" in p for p in problems))
+        self.assertTrue(any(".itemrc must hold" in p for p in problems))
+        self.assertTrue(any(".grouprc must hold" in p for p in problems))
 
     def test_an_older_site_with_versions_in_boot_json_is_still_valid_and_migrates(self):
-        (self.site / "item-version").unlink()
-        (self.site / "group-version").unlink()
+        (self.site / ".itemrc").unlink()
+        (self.site / ".grouprc").unlink()
         (self.site / "boot.json").write_text(
             '{"templateTag": "3.4.0", "uiVersion": "2"}')
         code, problems = self.problems()
         self.assertEqual(problems, [])
         build_pool.main(["--key", str(self.keyfile), "--site", str(self.site)])
-        self.assertEqual(opaque.read_version(self.site, "item-version"), "3.4.0")
-        self.assertEqual(opaque.read_version(self.site, "group-version"), "2")
+        self.assertEqual(opaque.read_version(self.site, ".itemrc"), "3.4.0")
+        self.assertEqual(opaque.read_version(self.site, ".grouprc"), "2")
         self.assertEqual(json.loads((self.site / "boot.json").read_text()), {})
+
+    def test_readme_and_claude_notes_are_allowed_but_other_files_are_not(self):
+        (self.site / "README.md").write_text("A template.\n")
+        (self.site / "CLAUDE.md").write_text("Notes.\n")
+        code, problems = self.problems()
+        self.assertEqual(problems, [])
+        (self.site / "notes.txt").write_text("x")
+        code, problems = self.problems()
+        self.assertTrue(any("notes.txt" in p for p in problems))
+
+    def test_dot_files_need_nojekyll(self):
+        (self.site / ".nojekyll").unlink()
+        code, problems = self.problems()
+        self.assertTrue(any(".nojekyll is missing" in p for p in problems))
 
     def test_a_file_made_with_another_key_fails(self):
         ref = self.pool_files()[0]

@@ -16,7 +16,7 @@ and writes, in SITE:
     r.html q.html the reader and the quiz pages (opened as r.html#b=<id>);
                   they name no book
     boot.json     the sign-in theme: nothing else
-    item-version  the exact item UI tag; group-version: the hub UI version
+    .itemrc  the exact item UI tag; .grouprc: the hub UI version
 
 A file whose content did not change keeps its name and is left alone.
 Books already in the site's index.enc and not named on the command line are
@@ -148,7 +148,7 @@ def main(argv=None):
     parser.add_argument("--key", help="key file (hex/base64); default: "
                         "the environment variable SUBJECT_KEY")
     parser.add_argument("--template-tag", help="write this exact tag to "
-                        "item-version and into r.html and q.html")
+                        ".itemrc and into r.html and q.html")
     parser.add_argument("--site", required=True, help="the site folder")
     parser.add_argument("--no-sweep", action="store_true")
     parser.add_argument("--remove", action="append", default=[],
@@ -193,6 +193,9 @@ def main(argv=None):
         import make_subject_pages
         for name, text in make_subject_pages.make_pool_pages(tag).items():
             (site / name).write_text(text, encoding="utf-8")
+    # GitHub Pages hides files that start with a dot (.grouprc, .itemrc)
+    # from a site without this empty file
+    (site / ".nojekyll").touch()
     opaque.write_boot(site, subject.get("theme"))
     if tag:
         opaque.write_version(site, opaque.ITEM_VERSION_NAME, tag)
