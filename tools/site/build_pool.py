@@ -37,6 +37,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import opaque  # noqa: E402
+import split_questions  # noqa: E402
 
 TEXT_FILES = ("data/", "quiz/questions.enc")
 SUBJECT_PUBLIC_KEYS = ("templateTag", "uiVersion", "theme")   # never in index.enc
@@ -79,15 +80,28 @@ def import_book(pool, folder):
     info = json.loads((folder / "book.json").read_text(encoding="utf-8"))
     book_id = info["id"]
     files = {}
+    question_parts = []
     for path in sorted(folder.rglob("*.enc")):
         own = path.relative_to(folder).as_posix()
         plain = read_plain(pool.key, path, picture_id(own))
         text = own.startswith(TEXT_FILES)
+        if own == "quiz/questions.enc":
+            parts = split_questions.chunks(json.loads(plain))
+            if parts:
+                # a big bank: one pool file per unit, listed in order
+                for part_path, body in parts:
+                    files[part_path] = pool.put(
+                        book_id, part_path, split_questions.dump(body),
+                        compress=True)
+                question_parts = [part_path for part_path, _ in parts]
+                continue
         files[own] = pool.put(book_id, own, plain, compress=text)
     # "repo" is the book's own name (what the book repo and its status
     # record are called); "id" is the random address id, set in main()
     entry = {"repo": book_id, "title": info.get("title", book_id),
              "views": sorted(info.get("views", {})), "files": files}
+    if question_parts:
+        entry["questionParts"] = question_parts
     manifest = files.get("data/manifest.enc")
     if manifest:
         data = json.loads(opaque.unseal(

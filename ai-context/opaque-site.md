@@ -50,6 +50,25 @@ quiz keep asking for `data/manifest.enc`, `data/ch/<prefix>.enc`,
 `RecallQuizPool.addressOf(path)` turns that into the pool address. A reader
 that finds a `format` it does not know stops; a new format is a new major.
 
+### Split question banks
+
+A book with more than one unit (chapter) of questions is published in
+chunks instead of one `quiz/questions.enc` (`tools/site/split_questions.py`,
+called by `build_pool.py`; the book repo still holds one `questions.json`):
+
+- one pool file per unit, `quiz/q/<unit slug>.enc`; a unit over 300 questions
+  becomes `<slug>-1`, `<slug>-2`...; questions without a unit go to `unsorted`;
+- the name comes from the unit, not its position, so editing one chapter
+  changes one pool file (the pool id hashes path and content);
+- the first chunk also carries `id`, `book`, `labels` and every other key of
+  the bank; questions are grouped by unit in order of first appearance;
+- the book's index entry gets `"questionParts": ["quiz/q/...", ...]` in book
+  order and no `quiz/questions.enc` in `files`. A bank that fits one chunk is
+  stored as `quiz/questions.enc` as before;
+- `js/early-questions.js` fetches the listed parts together and joins them
+  (`mergeParts`); an entry without `questionParts` is read as before, so older
+  sites keep working. Test: `tests/test_split_questions.py`.
+
 ## Publishing
 
 The private book repo builds as before (`build_book.py`), then
