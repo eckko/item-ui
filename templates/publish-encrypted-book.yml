@@ -15,9 +15,6 @@
 #                              "Contents: Read and write"
 #   SUBJECT_KEY                the subject key: 32 bytes as 64 hex characters
 #                              or base64. One key for the whole subject.
-#   QUIZ_MEDIA_OLD_KEY         only if this book's media/ files were NOT made
-#                              with the public "placeholder" key: their key
-#                              (base64)
 #   (optional variable) READER_SUBJECT_REPO  name of the subject repo
 name: Publish encrypted book (reader + quiz)
 
@@ -114,7 +111,6 @@ jobs:
         if: steps.setup.outputs.skip != 'true'
         env:
           SUBJECT_KEY: ${{ secrets.SUBJECT_KEY }}
-          QUIZ_MEDIA_OLD_KEY: ${{ secrets.QUIZ_MEDIA_OLD_KEY }}
         run: |
           echo "::add-mask::$SUBJECT_KEY"
           args=(--book book --template-tag "$TEMPLATE_TAG" --out "$RUNNER_TEMP/site")

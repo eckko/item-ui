@@ -44,11 +44,11 @@ holds only ciphertext and tiny pages:
 | `index.html` | the gate: unlocks, then opens `?view=read` or `?view=quiz` (or shows two buttons) |
 | `read.html`, `quiz.html` | tiny pages that load `reader/` or `js/boot.js` from the CDN at an exact tag. Both views use the quiz themes, the same bar and the same gear (reading settings) |
 | `book.json` | public `id`, `title` and `views` (which of read/quiz exist) |
-| `data/`, `media/` | the reader's encrypted chapters and pictures |
+| `data/`, `media/` | the reader's encrypted chapters and pictures (a book's own pictures are plain files, `media/<id>.<ext>`, until publish) |
 | `quiz/questions.enc` (or `quiz/q/*.enc`, one per unit, on a pool site), `quiz/media/` | the quiz's questions and pictures, same key |
 
 `js/unlock.js` gets the key (sign in with Google and read
-`users/<uid>/mediaKeys/subject`, or paste it) before either view starts,
+`users/<uid>/subjects/<subject>` (subject = repo name), or paste it) before either view starts,
 and keeps it for the tab. `tools/book_build/build_book.py` builds a book
 folder from a private book repo (EPUB, notes EPUB, `questions.json`);
 `tools/make_subject_pages.py` writes the three pages. `tools/site/` holds the tools for the subject site itself (`build_hub.py`,

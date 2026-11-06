@@ -274,13 +274,15 @@ All optional. Banks without them work exactly as before. Checked by
 | question, block | `code`, `lang` | a code listing, shown as text in a `<pre>` (never parsed) |
 | question, block | `media` | `[{id or src, alt, role, type}]`. `alt` is required unless `role` is `decorative`, because a question must be answerable from text |
 
-Media files: `media/<id>.enc` is a 12-byte nonce plus AES-GCM data. The
-file key is HKDF-SHA-256 of the book key with info `file:<id>`, and the
-id is the authenticated data. `tools/encrypt_media.py` writes them; the
-nonce is a keyed hash of the content, so a rebuild gives identical bytes.
-The book key is never in the site: `quiz.media.setKeyProvider(fn)` is
-called by whatever signs the reader in (the Firebase document that holds
-the key must be readable only by the reader's account). Without a key the
+Media files: in the book's repo a picture or clip is a plain file,
+`media/<id>.<ext>` (for example `media/u03/i07/f02.webp`). The extension
+follows the entry's `type` (`image/webp` webp, `image/png` png, `image/jpeg`
+jpg, `image/gif` gif, `image/svg+xml` svg, `image/avif` avif, `audio/mpeg`
+mp3, `audio/mp4` m4a, `audio/ogg` ogg, `audio/wav` wav, `video/mp4` mp4,
+`video/webm` webm); a missing `type` means `image/webp`. `build_book.py`
+checks that every entry's file exists with that extension, and encrypts the
+files with the subject key when it publishes (`quiz/media/<id>.enc`, see
+`ai-context/opaque-site.md`). There is no per-book key. Without the file the
 card or question shows the `alt` text. Sizes: 3 MB a clip, 100 MB a book.
 
 Theme colours `study` and `studyBg` (in a theme's `colors`) are optional.
@@ -290,17 +292,8 @@ violet or magenta, whichever is farthest in hue from the theme's accents.
 Roles: `figure`, `illustration`, `cover`, `logo`, `decorative` (never shown,
 no `alt` needed), `animation`, `clip`.
 
-Placeholder key: `encrypt_media.py placeholder ...` hides files with a
-public stand-in key (SHA-256 of `key-placeholder`). Those files are not
-secret. `tools/reencrypt_media.py placeholder <real key file>` swaps them
-to the real key later; it is safe to run again.
-
-### Where the book key lives
-
-Firestore `users/<uid>/mediaKeys/<book id>` with a string field `key` (32
-random bytes, base64). Created by hand in the console; the rules in
-`js/sync/providers/firebase-firestore.rules` allow the owner to read it and
-nobody to write it. The key is never in the site or the repo.
+Old books whose `media/` holds `<id>.enc` files (hidden with the public
+placeholder key) are converted once by `tools/plain_media.py`.
 
 ## Book start-up defaults
 

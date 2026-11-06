@@ -22,10 +22,11 @@ service cloud.firestore {
                                  < 700000;
     }
 
-    // The book key for a book's secret pictures (media/*.enc). The
-    // author writes it by hand in the console; the page can only read
+    // The subject key of an encrypted subject site (document id = subject
+    // name = repo name) (read by js/unlock.js).
+    // The author writes it by hand in the console; the page can only read
     // it, and only for the signed-in reader's own account.
-    match /users/{userId}/mediaKeys/{bookId} {
+    match /users/{userId}/subjects/{subject} {
       allow read: if request.auth != null
                   && request.auth.uid == userId;
       allow write: if false;

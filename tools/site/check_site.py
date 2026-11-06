@@ -182,6 +182,11 @@ def names_to_hide(index, extra_terms):
     return sorted({n.strip().lower() for n in names if len(n.strip()) >= 3})
 
 
+# The one place a page may carry the subject name: the repo name is the
+# document id of the reader's key, and the address shows it anyway.
+KEY_DOC_META = re.compile(r'<meta\s+name=["\']key-doc["\'][^>]*>', re.I)
+
+
 def readable_files(site):
     """The files a visitor can read, as (name for messages, text)."""
     for item in sorted(site.rglob("*")):
@@ -192,7 +197,8 @@ def readable_files(site):
             continue
         if item.suffix.lower() in READABLE_SUFFIXES or item.name in (
                 "CNAME", ".gitignore"):
-            yield rel.as_posix(), item.read_text("utf-8", errors="replace")
+            text = item.read_text("utf-8", errors="replace")
+            yield rel.as_posix(), KEY_DOC_META.sub("", text)
 
 
 def slug(text):
