@@ -65,7 +65,50 @@ class OpaqueCase(unittest.TestCase):
 
     def pool_files(self):
         return sorted(p.relative_to(self.site).as_posix()
-                      for p in self.site.glob("??/*.bin"))
+                      for p in self.site.glob("bin/??/*.bin"))
+
+
+class MoveIntoBinTests(OpaqueCase):
+    def old_layout(self):
+        """Rebuild the site, then put it back as the old layout was."""
+        self.run_build()
+        index = opaque.read_index(self.site, KEY)
+        for book in index["books"]:
+            book["files"] = {k: v[len("bin/"):]
+                             for k, v in book["files"].items()}
+        opaque.write_index(self.site, KEY, index)
+        for path in (self.site / "bin").iterdir():
+            path.rename(self.site / path.name)
+        (self.site / "bin").rmdir()
+
+    def test_old_pool_is_moved_and_index_repointed(self):
+        self.old_layout()
+        count = len(opaque.old_pool_files(self.site))
+        self.assertGreater(count, 0)
+        self.assertEqual(opaque.move_pool_into_bin(self.site, KEY), count)
+        self.assertEqual(opaque.old_pool_files(self.site), [])
+        index = opaque.read_index(self.site, KEY)
+        for ref in index["books"][0]["files"].values():
+            self.assertRegex(ref, opaque.REF_PATTERN)
+            self.assertTrue((self.site / ref).is_file())
+
+    def test_moving_twice_does_nothing(self):
+        self.old_layout()
+        opaque.move_pool_into_bin(self.site, KEY)
+        self.assertEqual(opaque.move_pool_into_bin(self.site, KEY), 0)
+
+    def test_build_after_old_layout_keeps_every_file(self):
+        self.old_layout()
+        self.run_build()
+        self.assertEqual(opaque.old_pool_files(self.site), [])
+        self.assertGreater(len(self.pool_files()), 0)
+
+    def test_wrong_key_moves_nothing(self):
+        self.old_layout()
+        before = opaque.old_pool_files(self.site)
+        with self.assertRaises(Exception):
+            opaque.move_pool_into_bin(self.site, bytes(32))
+        self.assertEqual(opaque.old_pool_files(self.site), before)
 
 
 class IdTests(OpaqueCase):
@@ -106,9 +149,8 @@ class PoolTests(OpaqueCase):
     def test_build_writes_only_opaque_files(self):
         self.run_build()
         names = {p.name for p in self.site.iterdir()}
-        shards = {n for n in names if re.fullmatch("[0-9a-f]{2}", n)}
-        self.assertEqual(names - shards, {
-            "index.enc", "boot.json", "r.html", "q.html",
+        self.assertEqual(names, {
+            "bin", "index.enc", "boot.json", "r.html", "q.html",
             ".itemrc", ".grouprc", ".nojekyll"})
         for ref in self.pool_files():
             self.assertRegex(ref, opaque.REF_PATTERN)
@@ -126,7 +168,7 @@ class PoolTests(OpaqueCase):
 
     def test_nothing_readable_outside_boot_and_subject(self):
         self.run_build()
-        for path in list(self.site.glob("??/*.bin")) + [self.site / "index.enc"]:
+        for path in list(self.site.glob("bin/??/*.bin")) + [self.site / "index.enc"]:
             blob = path.read_bytes()
             self.assertEqual(blob[:4], b"RQE1")
             for word in (b"Alpha", b"alpha", b"My Subject", b"PNG"):
@@ -380,8 +422,8 @@ class CheckSiteTests(OpaqueCase):
         self.assertTrue(any("does not look encrypted" in p for p in problems))
 
     def test_wrong_pool_name_fails(self):
-        (self.site / "ab").mkdir(exist_ok=True)
-        (self.site / "ab" / "alpha.bin").write_bytes(b"RQE1" * 20)
+        (self.site / "bin" / "ab").mkdir(parents=True, exist_ok=True)
+        (self.site / "bin" / "ab" / "alpha.bin").write_bytes(b"RQE1" * 20)
         code, problems = self.problems()
         self.assertTrue(any("not a pool file name" in p for p in problems))
 
@@ -389,12 +431,18 @@ class CheckSiteTests(OpaqueCase):
         ref = self.pool_files()[0]
         (self.site / ref).rename(self.site / "ab_x")
         (self.site / "ab_x").rename(self.tmp / "gone")
-        (self.site / "ab").mkdir(exist_ok=True)
-        extra = self.site / "ab" / ("0" * 30 + ".bin")
+        (self.site / "bin" / "ab").mkdir(parents=True, exist_ok=True)
+        extra = self.site / "bin" / "ab" / ("0" * 30 + ".bin")
         extra.write_bytes(opaque.seal(KEY, b"orphan", True))
         code, problems = self.problems()
         self.assertTrue(any("missing" in p for p in problems))
         self.assertTrue(any("orphan" in p for p in problems))
+
+    def test_old_layout_folder_at_the_top_is_reported(self):
+        (self.site / "ab").mkdir()
+        code, problems = self.problems()
+        self.assertEqual(code, 1)
+        self.assertTrue(any("old layout" in p for p in problems))
 
     def test_book_name_in_a_page_or_file_name_fails(self):
         (self.site / "index.html").write_text("<h1>Alpha Title</h1>")
