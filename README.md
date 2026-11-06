@@ -45,7 +45,7 @@ holds only ciphertext and tiny pages:
 | `read.html`, `quiz.html` | tiny pages that load `reader/` or `js/boot.js` from the CDN at an exact tag. Both views use the quiz themes, the same bar and the same gear (reading settings) |
 | `book.json` | public `id`, `title` and `views` (which of read/quiz exist) |
 | `data/`, `media/` | the reader's encrypted chapters and pictures |
-| `quiz/questions.enc`, `quiz/media/` | the quiz's questions and pictures, same key |
+| `quiz/questions.enc` (or `quiz/q/*.enc`, one per unit, on a pool site), `quiz/media/` | the quiz's questions and pictures, same key |
 
 `js/unlock.js` gets the key (sign in with Google and read
 `users/<uid>/mediaKeys/subject`, or paste it) before either view starts,

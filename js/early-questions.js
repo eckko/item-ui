@@ -30,37 +30,64 @@
   }
 
   /**
+   * Join the chunks of a split bank (see tools/site/split_questions.py).
+   * The first chunk carries id, book, labels and so on; the questions of
+   * all chunks follow in the order given.
+   * @param {object[]} parts  the parsed chunks, in book order
+   * @returns {object} one bank, as questions.json would be
+   */
+  function mergeParts(parts) {
+    const bank = Object.assign({}, parts[0]);
+    bank.questions = [].concat.apply([], parts.map(function list(part) {
+      return part.questions || [];
+    }));
+    return bank;
+  }
+
+  /**
    * Encrypted book site (template v3): the page set
    * window.RecallQuizEncrypted = { questions: "quiz/questions.enc" } and
    * unlocked the subject key (js/unlock.js) before starting this file.
+   * On a pool site a big bank is stored in chunks, one per unit; the
+   * book's index entry then lists them in "questionParts" and they are
+   * fetched together. Without that list the single file is read.
    * @returns {Promise<object>} the decrypted, parsed question bank
    */
   function fetchEncryptedQuestions() {
     const unlock = window.SubjectUnlock;
     const pool = window.RecallQuizPool;
-    return unlock.ready().then(function find(unlocked) {
-      // a pool site names the file through its encrypted index
-      return (pool && pool.enabled ? pool.ready() : Promise.resolve())
-        .then(function address() {
-          return {
-            unlocked: unlocked,
-            address: pool && pool.enabled ?
-              pool.addressOf(window.RecallQuizEncrypted.questions) :
-              window.RecallQuizEncrypted.questions,
-          };
-        });
-    }).then(function download(found) {
-      return fetch(found.address, { cache: "no-cache" })
+    const usePool = Boolean(pool && pool.enabled);
+
+    function fetchOne(address, key) {
+      return fetch(address, { cache: "no-cache" })
         .then(function read(response) {
           if (!response.ok) {
             throw new Error("HTTP " + response.status);
           }
           return response.arrayBuffer();
         }).then(function open(buffer) {
-          return unlock.decrypt(buffer, found.unlocked.key);
+          return unlock.decrypt(buffer, key);
+        }).then(function parse(bytes) {
+          return JSON.parse(new TextDecoder().decode(bytes));
         });
-    }).then(function parse(bytes) {
-      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+
+    return unlock.ready().then(function find(unlocked) {
+      // a pool site names the file through its encrypted index
+      return (usePool ? pool.ready() : Promise.resolve(null))
+        .then(function fetchAll(entry) {
+          const key = unlocked.key;
+          if (usePool && entry && entry.questionParts &&
+              entry.questionParts.length) {
+            return Promise.all(entry.questionParts.map(
+              function one(path) {
+                return fetchOne(pool.addressOf(path), key);
+              })).then(mergeParts);
+          }
+          return fetchOne(usePool ?
+            pool.addressOf(window.RecallQuizEncrypted.questions) :
+            window.RecallQuizEncrypted.questions, key);
+        });
     });
   }
 
@@ -86,5 +113,5 @@
   // main.js handles a failure; this stops a "not handled" warning in the
   // short time before it has attached its own handler.
   promise.catch(function ignoreHere() {});
-  window.RecallQuizQuestions = { promise };
+  window.RecallQuizQuestions = { promise, mergeParts };
 })();
