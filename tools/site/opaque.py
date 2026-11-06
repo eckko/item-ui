@@ -29,6 +29,7 @@ import hmac
 import json
 import os
 import re
+import secrets
 from pathlib import Path
 
 from cryptography.hazmat.primitives import hashes
@@ -212,12 +213,23 @@ def read_index(root, key):
     return json.loads(unseal(key, (Path(root) / INDEX_NAME).read_bytes()))
 
 
+def new_book_id():
+    """A random id for a book's address: 20 hex characters (80 bits).
+
+    The id only names the book inside index.enc and in the page address
+    (r.html#b=<id>). It is not made from the book's name, so it tells
+    nobody anything, and it never changes once the book has one.
+    """
+    return secrets.token_hex(10)
+
+
 def build_index(subject, books):
     """The index document.
 
     @param subject: the subject's own settings (title and so on)
-    @param books: list of {"id", "title", "summary", "cover", "views",
-        "files"}; files maps a book's own file name to a pool path
+    @param books: list of {"id", "repo", "title", "summary", "cover",
+        "views", "files"}; id is the random address id, repo the book's own
+        name (the book repo and its status record); files maps a book's own file name to a pool path
     @return: dict
     """
     return {"format": INDEX_FORMAT, "subject": subject, "books": books}

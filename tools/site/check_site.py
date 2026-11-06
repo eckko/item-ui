@@ -154,7 +154,8 @@ def names_to_hide(index, extra_terms):
     """
     names = [index.get("subject", {}).get("title", "")]
     for book in index.get("books", []):
-        names += [book.get("id", ""), book.get("title", "")]
+        names += [book.get("id", ""), book.get("repo", ""),
+                  book.get("title", "")]
     names += list(extra_terms)
     return sorted({n.strip().lower() for n in names if len(n.strip()) >= 3})
 

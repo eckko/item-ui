@@ -6,7 +6,11 @@
  *
  *   <meta name="pool-index" content="index.enc">
  *
- * and open the page as ?b=<book id>. Without that tag the page is an
+ * and open the page as r.html#b=<book id>. The id sits after the "#", which
+ * the browser never sends to the server, so no book id or name appears in
+ * a server log. The page remembers it for this tab and removes it from the
+ * address. (Links of the older form ?b=<id> still work.) Without that tag
+ * the page is an
  * older book site and this file does nothing.
  *
  * index.enc is encrypted with the subject key. Once the reader has the key
@@ -38,12 +42,42 @@
     return indexAddress.replace(/[^/]*$/, "");
   }
 
+  const STORAGE_NAME = "rq-pool-book";
+
   /**
-   * @returns {string} the book id in the page address (?b=...), or ""
+   * Take the book id from the page address, keep it for this tab and take
+   * it out of the address. This runs when the script loads, before the
+   * key handling rewrites the "#" part.
+   * @returns {string} the book id, or ""
    */
-  function bookIdInAddress() {
-    return new URLSearchParams(window.location.search).get("b") || "";
+  function bookIdAtLoad() {
+    const hash = String(window.location.hash || "");
+    const found = hash.match(/(?:^#|&)b=([^&]+)/);
+    let id = found ? decodeURIComponent(found[1]) : "";
+    if (id) {
+      try {
+        window.sessionStorage.setItem(STORAGE_NAME, id);
+      } catch (problem) {
+        // private mode: the id is kept in memory only
+      }
+      if (window.history && window.history.replaceState) {
+        const rest = hash.slice(1).split("&").filter(function other(part) {
+          return part && part.indexOf("b=") !== 0;
+        }).join("&");
+        window.history.replaceState(null, "", window.location.pathname +
+          window.location.search + (rest ? "#" + rest : ""));
+      }
+      return id;
+    }
+    try {
+      id = window.sessionStorage.getItem(STORAGE_NAME) || "";
+    } catch (problem) {
+      id = "";
+    }
+    return id || new URLSearchParams(window.location.search).get("b") || "";
   }
+
+  const bookIdFromAddress = enabled ? bookIdAtLoad() : "";
 
   /**
    * Check the index and pick the book.
@@ -99,7 +133,7 @@
         });
       }).then(function parse(bytes) {
         current = build(JSON.parse(new TextDecoder().decode(bytes)),
-          bookIdInAddress(), folderOf(meta.content));
+          bookIdFromAddress, folderOf(meta.content));
         return current.entry;
       });
     }

@@ -13,15 +13,16 @@ and writes, in SITE:
     index.enc     the encrypted index: subject settings, each book with its
                   title, cover, views and the map from the book's own file
                   names to pool paths
-    r.html q.html the reader and the quiz pages (opened as r.html?b=<id>);
+    r.html q.html the reader and the quiz pages (opened as r.html#b=<id>);
                   they name no book
     boot.json     templateTag, uiVersion and the sign-in theme: nothing else
 
 A file whose content did not change keeps its name and is left alone.
 Books already in the site's index.enc and not named on the command line are
 kept as they are, so each private book repo can publish its own book:
-a book with the same id is replaced, any other is added. --remove ID drops
-a book. Files no book uses any more are removed (leave that out with
+a book with the same name is replaced, any other is added. A book gets a
+random id the first time it is published and keeps it. --remove drops a
+book, given by its name or its id. Files no book uses any more are removed (leave that out with
 --no-sweep). SITE may hold subject.json (read for the title and the
 settings); it is removed once its settings are in index.enc and boot.json.
 """
@@ -82,7 +83,9 @@ def import_book(pool, folder):
         plain = read_plain(pool.key, path, picture_id(own))
         text = own.startswith(TEXT_FILES)
         files[own] = pool.put(book_id, own, plain, compress=text)
-    entry = {"id": book_id, "title": info.get("title", book_id),
+    # "repo" is the book's own name (what the book repo and its status
+    # record are called); "id" is the random address id, set in main()
+    entry = {"repo": book_id, "title": info.get("title", book_id),
              "views": sorted(info.get("views", {})), "files": files}
     manifest = files.get("data/manifest.enc")
     if manifest:
@@ -94,6 +97,23 @@ def import_book(pool, folder):
         if cover:
             entry["cover"] = "media/" + cover.replace("/", "_") + ".enc"
     return entry
+
+
+def with_random_id(entry):
+    """An index entry in the current shape.
+
+    Older indexes used the book's own name as its id. Such an entry gets a
+    random id (and keeps the name as "repo") the first time it is read.
+
+    @param entry: a book entry of index.enc
+    @return: the entry with "repo" and a random "id"
+    """
+    if "repo" in entry:
+        return entry
+    upgraded = dict(entry)
+    upgraded["repo"] = entry["id"]
+    upgraded["id"] = opaque.new_book_id()
+    return upgraded
 
 
 def starting_settings(site, key):
@@ -138,14 +158,24 @@ def main(argv=None):
         subject["templateTag"] = args.template_tag
     pool = opaque.Pool(site, key)
     entries = [import_book(pool, Path(b)) for b in args.books]
-    replaced = {e["id"] for e in entries} | set(args.remove)
+    before = []
     if (site / opaque.INDEX_NAME).is_file():
-        before = opaque.read_index(site, key)["books"]
-        for entry in before:
-            if entry["id"] not in replaced:
-                entries.append(entry)
-                pool.used.update(entry["files"].values())
-    entries.sort(key=lambda e: e["id"])
+        before = [with_random_id(e) for e in
+                  opaque.read_index(site, key)["books"]]
+    ids = {e["repo"]: e["id"] for e in before}
+    for entry in entries:
+        # a book that is already in the index keeps its id for good
+        entry["id"] = ids.get(entry["repo"]) or opaque.new_book_id()
+    replaced = {e["repo"] for e in entries}
+    removed_ids = set(args.remove)
+    for entry in before:
+        if entry["repo"] in replaced:
+            continue
+        if entry["repo"] in removed_ids or entry["id"] in removed_ids:
+            continue
+        entries.append(entry)
+        pool.used.update(entry["files"].values())
+    entries.sort(key=lambda e: e["repo"])
     shown = {k: v for k, v in subject.items()
              if k not in SUBJECT_PUBLIC_KEYS}
     opaque.write_index(site, key, opaque.build_index(shown, entries))

@@ -142,7 +142,7 @@ POOL_SCRIPT = '\n<script src="{base}/js/pool-files.js"></script>'
 
 def make_pool_pages(tag):
     """The two pages of a site whose files all sit under opaque names:
-    r.html (reader) and q.html (quiz), opened as r.html?b=<book id>.
+    r.html (reader) and q.html (quiz), opened as r.html#b=<book id>.
 
     They carry no title and no book name; the reader and the quiz set
     their own title once the reader has signed in and the encrypted index
