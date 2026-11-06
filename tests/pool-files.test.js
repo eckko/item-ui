@@ -19,11 +19,18 @@ const INDEX = {
 };
 
 /** Run the script with a fake page. */
-function load({ meta, search, index, status }) {
+function load({ meta, search, hash, stored, index, status }) {
+  const saved = Object.assign({}, stored || {});
+  const replaced = [];
   const calls = [];
   const sandbox = {
     document: { querySelector: () => (meta ? { content: meta } : null) },
-    window: { location: { search: search || "" },
+    window: { location: { search: search || "", hash: hash || "", pathname: "/r.html" },
+      sessionStorage: {
+        getItem: (name) => (name in saved ? saved[name] : null),
+        setItem: (name, value) => { saved[name] = value; },
+      },
+      history: { replaceState: (a, b, address) => replaced.push(address) },
       SubjectUnlock: {
         ready: async () => ({ key: "K" }),
         decrypt: async (buffer) => {
@@ -39,7 +46,7 @@ function load({ meta, search, index, status }) {
     URLSearchParams, TextDecoder, Error, JSON, Promise,
   };
   vm.runInNewContext(SOURCE, sandbox);
-  return { pool: sandbox.window.RecallQuizPool, calls };
+  return { pool: sandbox.window.RecallQuizPool, calls, saved, replaced };
 }
 
 test("does nothing without the meta tag", async () => {
@@ -93,4 +100,32 @@ test("a newer index format is refused", async () => {
 test("a missing index file is an error", async () => {
   const { pool } = load({ meta: "index.enc", search: "?b=one", index: INDEX, status: 404 });
   await assert.rejects(pool.ready(), /index 404/);
+});
+
+test("the book id comes from the part after #, which no server sees", async () => {
+  const { pool, saved, replaced } = load({ meta: "index.enc", hash: "#b=one", index: INDEX });
+  assert.equal((await pool.ready()).title, "One");
+  assert.equal(saved["rq-pool-book"], "one");
+  assert.deepEqual(replaced, ["/r.html"], "the id is taken out of the address");
+});
+
+test("other parts of # stay, and the key part is left for unlock.js", async () => {
+  const { pool, replaced } = load({ meta: "index.enc", hash: "#key=abc&b=one", index: INDEX });
+  await pool.ready();
+  assert.deepEqual(replaced, ["/r.html#key=abc"]);
+});
+
+test("a reload in the same tab still finds the book", async () => {
+  const { pool } = load({ meta: "index.enc", stored: { "rq-pool-book": "two" }, index: INDEX });
+  assert.equal((await pool.ready()).title, "Two");
+});
+
+test("a new # id beats the one remembered", async () => {
+  const { pool } = load({ meta: "index.enc", hash: "#b=one", stored: { "rq-pool-book": "two" }, index: INDEX });
+  assert.equal((await pool.ready()).title, "One");
+});
+
+test("an older ?b= link still works", async () => {
+  const { pool } = load({ meta: "index.enc", search: "?b=two", index: INDEX });
+  assert.equal((await pool.ready()).title, "Two");
 });

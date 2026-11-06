@@ -135,8 +135,9 @@ class PoolTests(OpaqueCase):
         self.assertEqual(index["format"], 2)
         self.assertEqual(index["subject"], {"title": "My Subject"})
         book = index["books"][0]
-        self.assertEqual((book["id"], book["title"], book["summary"]),
+        self.assertEqual((book["repo"], book["title"], book["summary"]),
                          ("alpha", "Alpha Title", "About it"))
+        self.assertRegex(book["id"], r"^[0-9a-f]{20}$")
         self.assertEqual(book["cover"], "media/alpha_front_cover.enc")
         self.assertEqual(sorted(book["views"]), ["quiz", "read"])
         self.assertEqual(sorted(book["files"]), [
@@ -206,7 +207,7 @@ class PoolTests(OpaqueCase):
                          str(self.site), str(other)])
         self.run_build()                        # publishes alpha only
         index = opaque.read_index(self.site, KEY)
-        self.assertEqual([b["id"] for b in index["books"]],
+        self.assertEqual([b["repo"] for b in index["books"]],
                          ["alpha", "beta"])
         self.assertEqual(len(self.pool_files()), 10)
         for book in index["books"]:
@@ -219,6 +220,46 @@ class PoolTests(OpaqueCase):
                          str(self.site), "--remove", "alpha"])
         self.assertEqual(opaque.read_index(self.site, KEY)["books"], [])
         self.assertEqual(self.pool_files(), [])
+
+    def test_id_is_random_stable_and_not_the_name(self):
+        self.run_build()
+        first = opaque.read_index(self.site, KEY)["books"][0]["id"]
+        self.assertNotIn("alpha", first)
+        self.run_build()                        # publish the book again
+        self.assertEqual(
+            opaque.read_index(self.site, KEY)["books"][0]["id"], first)
+        other_site = self.tmp / "site2"
+        other_site.mkdir()
+        build_pool.main(["--key", str(self.keyfile), "--site",
+                         str(other_site), "--template-tag", "3.4.0",
+                         str(self.book)])
+        second = opaque.read_index(other_site, KEY)["books"][0]["id"]
+        self.assertNotEqual(first, second)
+
+    def test_a_book_with_the_older_id_gets_a_random_one(self):
+        self.run_build()
+        index = opaque.read_index(self.site, KEY)
+        book = index["books"][0]
+        old = {k: v for k, v in book.items() if k != "repo"}
+        old["id"] = "alpha"                     # how older sites kept it
+        index["books"] = [old]
+        opaque.write_index(self.site, KEY, index)
+        build_pool.main(["--key", str(self.keyfile), "--site",
+                         str(self.site)])       # nothing new: just migrate
+        now = opaque.read_index(self.site, KEY)["books"][0]
+        self.assertEqual(now["repo"], "alpha")
+        self.assertRegex(now["id"], r"^[0-9a-f]{20}$")
+        build_pool.main(["--key", str(self.keyfile), "--site",
+                         str(self.site)])
+        self.assertEqual(
+            opaque.read_index(self.site, KEY)["books"][0]["id"], now["id"])
+
+    def test_remove_works_by_id_too(self):
+        self.run_build()
+        book_id = opaque.read_index(self.site, KEY)["books"][0]["id"]
+        build_pool.main(["--key", str(self.keyfile), "--site",
+                         str(self.site), "--remove", book_id])
+        self.assertEqual(opaque.read_index(self.site, KEY)["books"], [])
 
     def test_same_content_in_two_books_has_two_names(self):
         other = self.tmp / "beta"
@@ -247,9 +288,10 @@ class PagesAndBrowserCodeTests(OpaqueCase):
         if not sh.which("node"):
             self.skipTest("node is not installed")
         self.run_build()
+        book_id = opaque.read_index(self.site, KEY)["books"][0]["id"]
         out = subprocess.run(
             ["node", str(ROOT / "tests" / "pool-e2e.js"), str(self.site),
-             KEY.hex(), "alpha"], capture_output=True, text=True, check=True)
+             KEY.hex(), book_id], capture_output=True, text=True, check=True)
         found = json.loads(out.stdout)
         self.assertEqual(found["title"], "Alpha Title")
         self.assertEqual(found["files"]["quiz/media/u01.enc"], "\x89PNG-old")
