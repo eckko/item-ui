@@ -14,10 +14,11 @@ Always checked (no key needed):
   * only these top-level items exist: index.html, boot.json, index.enc,
     r.html, q.html, .itemrc, .grouprc, .nojekyll, CNAME, .gitignore,
     README.md, CLAUDE.md, .github/workflows/*.yml,
-    .theme/ (pictures and styles for the sign-in page only) and the
-    two-character folders of the pool;
+    .theme/ (pictures and styles for the sign-in page only) and bin/, the
+    pool (two-character folders inside it);
   * a pool folder holds only <30 hex characters>.bin files, each an RQE1
-    file that looks like random data (no readable text inside);
+    file that looks like random data (no readable text inside); pool
+    folders at the top of the site are the old layout and are reported;
   * boot.json holds only theme (an older site may still hold templateTag
     and uiVersion there); the versions are in .itemrc and .grouprc.
 
@@ -52,7 +53,7 @@ ROOT_FILES = {"index.html", "boot.json", "index.enc", "r.html", "q.html",
               "README.md", "CLAUDE.md"}
 ITEM_VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 GROUP_VERSION = re.compile(r"^\d+(\.\d+){0,2}$")
-ROOT_FOLDERS = {".github", ".theme", ".git"}
+ROOT_FOLDERS = {".github", ".theme", ".git", opaque.POOL_FOLDER}
 BOOT_KEYS = {"templateTag", "uiVersion", "theme"}
 THEME_SUFFIXES = {".svg", ".png", ".jpg", ".jpeg", ".webp", ".css",
                   ".woff", ".woff2", ".ico", ".txt"}
@@ -81,13 +82,23 @@ def check_layout(site):
     @return: list of problems
     """
     problems = []
+    old_folders = 0
     for item in sorted(site.iterdir()):
         name = item.name
         if item.is_file() and name in ROOT_FILES:
             continue
-        if item.is_dir() and (name in ROOT_FOLDERS or SHARD.match(name)):
+        if item.is_dir() and name in ROOT_FOLDERS:
+            continue
+        if item.is_dir() and SHARD.match(name):
+            old_folders += 1       # reported once, below
             continue
         problems.append("%s is not allowed at the top of the site" % name)
+    if old_folders:
+        problems.append(
+            "%d pool folder(s) sit at the top of the site (the old layout); "
+            "they belong under %s/. Publish a book again, or run "
+            "build_pool.py --site . --only-move" %
+            (old_folders, opaque.POOL_FOLDER))
     workflows = site / ".github"
     for item in sorted(workflows.rglob("*")) if workflows.is_dir() else []:
         rel = item.relative_to(site).as_posix()
@@ -100,8 +111,11 @@ def check_layout(site):
         if item.is_file() and item.suffix.lower() not in THEME_SUFFIXES:
             problems.append("%s is not a picture or style" %
                             item.relative_to(site).as_posix())
-    for folder in sorted(site.iterdir()):
+    pool = site / opaque.POOL_FOLDER
+    for folder in sorted(pool.iterdir()) if pool.is_dir() else []:
         if not (folder.is_dir() and SHARD.match(folder.name)):
+            problems.append("%s is not a pool folder" %
+                            folder.relative_to(site).as_posix())
             continue
         for item in sorted(folder.iterdir()):
             rel = item.relative_to(site).as_posix()
@@ -248,7 +262,7 @@ def check_with_key(site, key, extra_terms, git_log):
                 opaque.unseal(key, target.read_bytes())
             except Exception:
                 problems.append("%s is not made with the subject key" % ref)
-    on_disk = {p.relative_to(site).as_posix() for p in site.glob("??/*.bin")}
+    on_disk = {p.relative_to(site).as_posix() for p in site.glob("bin/??/*.bin")}
     for ref in sorted(on_disk - listed):
         problems.append("%s is not in the index (orphan)" % ref)
     hidden = names_to_hide(index, extra_terms)
@@ -256,7 +270,9 @@ def check_with_key(site, key, extra_terms, git_log):
         problems += find_leaks(text, label, hidden)
     for item in sorted(site.rglob("*")):
         rel = item.relative_to(site).as_posix()
-        if not rel.startswith(".git/") and not SHARD.match(rel.split("/")[0]):
+        first = rel.split("/")[0]
+        if not rel.startswith(".git/") and first != opaque.POOL_FOLDER \
+                and not SHARD.match(first):
             problems += find_leaks(rel, "the name " + rel, hidden)
     if git_log:
         log = subprocess.run(["git", "-C", str(site), "log", "--format=%B"],
