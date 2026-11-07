@@ -36,6 +36,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 import encrypt_media  # noqa: E402  (quiz picture format, tools/)
+import media_types  # noqa: E402
 import make_subject_pages  # noqa: E402
 sys.path.insert(0, str(HERE))
 import encfmt  # noqa: E402
@@ -60,40 +61,78 @@ def parse_key(text):
     return raw.hex() if len(raw) == 32 else None
 
 
-def old_media_key():
-    """The key the book repo's media/ files are encrypted with now: the
-    public placeholder, or QUIZ_MEDIA_OLD_KEY (base64) when set."""
-    text = os.environ.get("QUIZ_MEDIA_OLD_KEY", "").strip()
-    return base64.b64decode(text) if text else encrypt_media.placeholder_key()
+def book_media(book, bank):
+    """The plain media files of the book repo: {id: path}.
+
+    A file media/<id>.<ext> belongs to the entry with that id; the extension
+    must be the one the entry's type gives, because that is the name the
+    quiz asks for. Stops on an old encrypted media/*.enc file (convert the
+    book with tools/plain_media.py), two files with one id, or a file whose
+    extension does not match its entry.
+    """
+    source = book / "media"
+    old = sorted(source.rglob("*.enc")) if source.is_dir() else []
+    if old:
+        sys.exit("media/ still holds encrypted files (%s...): convert the "
+                 "book with tools/plain_media.py first" %
+                 old[0].relative_to(book).as_posix())
+    files = {}
+    for path in sorted(source.rglob("*")) if source.is_dir() else []:
+        if not path.is_file() or path.name.startswith("."):
+            continue
+        ext = path.suffix[1:]
+        if ext not in media_types.TYPES:
+            print("skipped media/%s: not a picture or clip type" %
+                  path.relative_to(source).as_posix())
+            continue
+        file_id = path.relative_to(source).with_suffix("").as_posix()
+        if file_id in files:
+            sys.exit("two files for the media id %s" % file_id)
+        files[file_id] = path
+    for entry in media_types.entries(bank):
+        want = media_types.extension_of(entry.get("type"))
+        have = files.get(entry["id"])
+        if want is None:
+            sys.exit("media %s has the type %s, which is not supported" %
+                     (entry["id"], entry.get("type")))
+        if have is None:
+            print("warning: no file media/%s.%s for %s" %
+                  (entry["id"], want, entry["id"]))
+        elif have.suffix[1:] != want:
+            sys.exit("media/%s is a .%s file but its entry says %s (.%s): "
+                     "rename the file or fix the type" %
+                     (have.relative_to(source).as_posix(), have.suffix[1:],
+                      entry.get("type") or media_types.DEFAULT_TYPE, want))
+    return files
 
 
 def build_quiz(book, bank, key_hex, out):
     """Write quiz/questions.enc and quiz/media/ (same subject key).
 
-    The book repo's own media/<id>.enc files (made for the plain quiz) are
-    opened with their current key and written again with the subject key.
+    The book repo's plain media/<id>.<ext> files are encrypted with the
+    subject key as quiz/media/<id>.enc.
     @return: number of pictures written
     """
+    files = book_media(book, bank)
     bank = dict(bank, mediaBase="quiz/media/")
     quiz_dir = out / "quiz"
     (quiz_dir / "media").mkdir(parents=True)
     (quiz_dir / "questions.enc").write_bytes(encfmt.encrypt(
         json.dumps(bank, ensure_ascii=False).encode(),
         bytes.fromhex(key_hex)))
-    old_key, new_key, count = old_media_key(), bytes.fromhex(key_hex), 0
-    source = book / "media"
-    for path in sorted(source.rglob("*.enc")) if source.is_dir() else []:
-        file_id = path.relative_to(source).with_suffix("").as_posix()
-        try:
-            plain = encrypt_media.decrypt(old_key, file_id, path.read_bytes())
-        except Exception:
-            sys.exit("cannot open %s with the book's media key; set "
-                     "QUIZ_MEDIA_OLD_KEY (base64) in the workflow" % path)
+    key, total = bytes.fromhex(key_hex), 0
+    for file_id, path in files.items():
+        plain = path.read_bytes()
+        if len(plain) > encrypt_media.LIMITS["one file"]:
+            sys.exit("%s is %s bytes: too big" % (path.name, format(len(plain), ",")))
+        total += len(plain)
         target = quiz_dir / "media" / (file_id + ".enc")
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(encrypt_media.encrypt(new_key, file_id, plain))
-        count += 1
-    return count
+        target.write_bytes(encrypt_media.encrypt(key, file_id, plain))
+    if total > encrypt_media.LIMITS["book"]:
+        sys.exit("the media of this book is %s bytes: over the book limit" %
+                 format(total, ","))
+    return len(files)
 
 
 def main(argv=None):
@@ -141,6 +180,10 @@ def main(argv=None):
             with zipfile.ZipFile(book / args.epub) as archive:
                 archive.extractall(epub_dir)
             chapters = book / "book-structure" / "chapters.json"
+            if not chapters.exists():
+                # add-structure's unit list is enough to read a book before
+                # any notes or questions exist.
+                chapters = book / "book-structure" / "chapters.skeleton.json"
             run(HERE / "extract_epub.py", epub_dir, chapters, work)
             run(HERE / "build_site.py", book, work, out, keyfile, epub_dir)
             if args.notes_epub:

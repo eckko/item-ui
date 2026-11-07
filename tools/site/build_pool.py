@@ -2,14 +2,14 @@
 """Turn built book folders into the flat pool of opaque files.
 
     python3 build_pool.py --key KEYFILE --site SITE BOOK_FOLDER [...]
-                          [--no-sweep]
+                          [--no-sweep] [--only-move]
 
 Each BOOK_FOLDER is what the private book build writes (see
 tools/site/build_hub.py for the layout). The tool decrypts each file with
 the subject key, stores it again under an opaque name (tools/site/opaque.py)
 and writes, in SITE:
 
-    xx/<id>.bin   the files
+    bin/xx/<id>.bin   the files
     index.enc     the encrypted index: subject settings, each book with its
                   title, cover, views and the map from the book's own file
                   names to pool paths
@@ -18,7 +18,10 @@ and writes, in SITE:
     boot.json     the sign-in theme: nothing else
     .itemrc  the exact item UI tag; .grouprc: the hub UI version
 
-A file whose content did not change keeps its name and is left alone.
+A pool that still sits in the old place (xx/<id>.bin at the top of SITE) is
+moved under bin/ first, and index.enc is pointed at the new paths; --only-move
+does just that and builds nothing. A file whose content did not change keeps
+its name and is left alone.
 Books already in the site's index.enc and not named on the command line are
 kept as they are, so each private book repo can publish its own book:
 a book with the same name is replaced, any other is added. A book gets a
@@ -131,6 +134,25 @@ def with_random_id(entry):
     return upgraded
 
 
+
+def read_existing_index(site, key):
+    """The index already in the site, with a clear stop when it was made
+    with a different key (a subject that is being re-keyed).
+
+    @return: the decrypted index
+    """
+    try:
+        return opaque.read_index(site, key)
+    except Exception as error:
+        raise SystemExit(
+            "index.enc in this subject site cannot be read with the "
+            "subject key given (%s). The site was made with another key. "
+            "To change a subject's key, run Update subject with 'reset' "
+            "on, which clears index.enc and the pool; every book is then "
+            "published again (book ids, and so reader progress, restart)."
+            % type(error).__name__)
+
+
 def starting_settings(site, key):
     """The subject's settings: subject.json when the site still has it
     (first conversion), otherwise what the last run wrote (the index's
@@ -143,7 +165,7 @@ def starting_settings(site, key):
         return json.loads((site / "subject.json").read_text(encoding="utf-8"))
     settings = {}
     if (site / opaque.INDEX_NAME).is_file():
-        settings.update(opaque.read_index(site, key).get("subject", {}))
+        settings.update(read_existing_index(site, key).get("subject", {}))
     if (site / opaque.BOOT_NAME).is_file():
         # an older site kept its versions here; the files below win
         settings.update(json.loads(
@@ -165,6 +187,9 @@ def main(argv=None):
                         ".itemrc and into r.html and q.html")
     parser.add_argument("--site", required=True, help="the site folder")
     parser.add_argument("--no-sweep", action="store_true")
+    parser.add_argument("--only-move", action="store_true",
+                        help="only move an old pool under bin/; build "
+                        "nothing")
     parser.add_argument("--remove", action="append", default=[],
                         metavar="ID", help="drop this book id (repeatable)")
     parser.add_argument("books", nargs="*", help="built book folders")
@@ -175,6 +200,13 @@ def main(argv=None):
     if not text.strip():
         sys.exit("give --key FILE or set SUBJECT_KEY")
     key = opaque.parse_key(text)
+    if (site / opaque.INDEX_NAME).is_file():
+        read_existing_index(site, key)   # a clear stop on the wrong key
+    moved = opaque.move_pool_into_bin(site, key)
+    if moved:
+        print("pool files moved under %s/: %d" % (opaque.POOL_FOLDER, moved))
+    if args.only_move:
+        return 0
     subject = starting_settings(site, key)
     if args.template_tag:
         subject["templateTag"] = args.template_tag
@@ -183,7 +215,7 @@ def main(argv=None):
     before = []
     if (site / opaque.INDEX_NAME).is_file():
         before = [with_random_id(e) for e in
-                  opaque.read_index(site, key)["books"]]
+                  read_existing_index(site, key)["books"]]
     ids = {e["repo"]: e["id"] for e in before}
     for entry in entries:
         # a book that is already in the index keeps its id for good

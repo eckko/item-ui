@@ -2782,7 +2782,7 @@ def test_new_bank_fields_show(browser):
     page.close()
 
 
-# 1x1 PNG, used as the made-up secret picture in the media tests
+# 1x1 PNG, used as the made-up picture in the media tests
 TINY_PNG = bytes.fromhex(
     "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
     "0000000d49444154789c63f8cfc0f01f0005000201a5f6454000000000"
@@ -2815,7 +2815,8 @@ def v2_bank():
 
 
 def encrypted_media():
-    """(base64 book key, the .enc bytes of TINY_PNG) made with the tool."""
+    """(base64 subject key, the .enc bytes of TINY_PNG) as a pool site
+    stores them."""
     sys.path.insert(0, str(SITE_FOLDER / "tools"))
     import base64
     import os
@@ -2826,8 +2827,8 @@ def encrypted_media():
 
 
 def test_template_v2_fields(browser):
-    """Genre chip, labelled blocks, code, and encrypted media with a text
-    fallback; the validator accepts them and rejects bad ones."""
+    """Genre chip, labelled blocks, code, and media (encrypted with the
+    subject key, or plain in the book repo) with a text fallback; the validator accepts them and rejects bad ones."""
     print("Template v2: blocks, code, media")
     bank = v2_bank()
     out = run_validator(bank)
@@ -2883,18 +2884,36 @@ def test_template_v2_fields(browser):
           "; ".join(page.errors))
     page.close()
     page = open_page(browser, book=bank)
-    page.route("**/media/" + MEDIA_ID + ".enc",
-               lambda route: route.fulfill(body=data))
+    page.route("**/media/" + MEDIA_ID + ".png",
+               lambda route: route.fulfill(body=TINY_PNG,
+                                           content_type="image/png"))
+    # the page asked for the cover before the route existed: clear what it
+    # remembers so it asks again
+    page.evaluate("() => RecallQuiz.media.setKeyProvider(null)")
+    page.wait_for_selector("#book-cover:not(.hidden)")
+    check("a plain cover shows by the title",
+          page.eval_on_selector("#book-cover", "i => i.naturalWidth") == 1)
+    start_session(page)
+    page.wait_for_selector(".media-figure.is-ready img")
+    check("the book's own plain picture shows (media/<id>.<ext>)",
+          page.eval_on_selector(".media-figure img",
+                                "i => i.naturalWidth") == 1)
+    check("no page errors with plain files", not page.errors,
+          "; ".join(page.errors))
+    page.close()
+    page = open_page(browser, book=bank)
+    page.route("**/media/" + MEDIA_ID + ".png",
+               lambda route: route.fulfill(status=404, body=""))
     start_session(page)
     page.wait_for_selector(".media-figure.is-missing")
-    check("without a key the words stand in for the picture",
+    check("a missing plain file: the words stand in for the picture",
           "clock face" in page.inner_text(".media-alt"))
-    check("without a key the box says why",
-          "no key" in page.inner_text(".media-reason"),
+    check("a missing plain file: the box says why",
+          "file not found" in page.inner_text(".media-reason"),
           page.inner_html(".media-figure")[:300])
-    check("without a key there is no cover",
+    check("a missing plain file: there is no cover",
           page.is_hidden("#book-cover"))
-    check("no page errors without the key", not page.errors,
+    check("no page errors with missing files", not page.errors,
           "; ".join(page.errors))
     page.close()
     page = open_page(browser, book=bank, width=375)
@@ -2906,53 +2925,24 @@ def test_template_v2_fields(browser):
     page.close()
 
 
-def test_media_key_comes_from_the_account(browser):
-    """Signed in, the book key is read from the account (here the test
-    adapter, never the real database) and waiting pictures open; signed
-    out, or with no key, the words stay."""
-    print("Media key from the account")
-    bank = v2_bank()
-    key, data = encrypted_media()
-    book_id = bank.get("id", "book")
-    page = open_page(
-        browser, book=bank,
-        sync_config='window.RecallQuizSyncConfig = {provider: '
-                    '"example-in-browser", saveDelaySeconds: 1, '
-                    '"example-in-browser": {}};',
-        init_script="sessionStorage.setItem("
-                    "'recall-quiz-example-media-key:%s', '%s');"
-                    % (book_id, key))
-    page.route("**/media/" + MEDIA_ID + ".enc",
-               lambda route: route.fulfill(body=data))
-    start_session(page)
-    page.wait_for_selector(".media-figure.is-missing")
-    check("signed out, the words stand in for the picture",
-          "clock face" in page.inner_text(".media-alt"))
-    page.evaluate("() => RecallQuiz.cloudSync.signIn()")
-    page.wait_for_selector(".media-figure.is-ready img", timeout=8000)
-    check("after sign-in the waiting picture opens with the account key",
-          page.eval_on_selector(".media-figure img",
-                                "i => i.naturalWidth") == 1)
-    check("no page errors reading the account key", not page.errors,
-          "; ".join(page.errors))
-    page.close()
-
-
 def test_firebase_key_rules_and_adapter():
-    """The Firebase adapter reads users/<uid>/mediaKeys/<book>; the rules
-    let only that reader read it and let nobody write it."""
-    print("Firebase media key rules")
+    """The rules let only the owner read users/<uid>/groups/<subject>
+    (the subject key) and let nobody write it; the adapter has no
+    per-book key reader any more."""
+    print("Firebase key rules")
     rules = (SITE_FOLDER / "js/sync/providers/firebase-firestore.rules"
              ).read_text()
-    block = rules[rules.index("mediaKeys"):]
-    check("rules have a mediaKeys block", "mediaKeys/{bookId}" in rules)
+    check("the old mediaKeys path is gone", "mediaKeys" not in rules)
+    check("rules have a groups block",
+          "users/{userId}/groups/{subject}" in rules)
+    block = rules[rules.index("/groups/"):]
     check("only the owner may read the key",
           "request.auth.uid == userId" in block)
     check("nobody may write the key from the page",
           "allow write: if false" in block)
     adapter = (SITE_FOLDER / "js/sync/providers/firebase.js").read_text()
-    check("the adapter reads the mediaKeys document",
-          '"mediaKeys"' in adapter and "readMediaKey" in adapter)
+    check("the adapter has no per-book key reader",
+          "mediaKeys" not in adapter and "readMediaKey" not in adapter)
 
 
 def test_results_are_gentle(browser):
@@ -3201,7 +3191,6 @@ def main():
             test_validator_writer_rules()
             test_new_bank_fields_show(browser)
             test_template_v2_fields(browser)
-            test_media_key_comes_from_the_account(browser)
             test_results_are_gentle(browser)
             test_weak_part_and_easy_ending(browser)
             test_five_minute_session(browser)

@@ -9,13 +9,16 @@
  *   1. the address (#key=...), which is removed from it straight away;
  *   2. this tab's sessionStorage (it keeps the key between pages);
  *   3. the signed-in reader's own account: the Firestore document
- *        users/<uid>/mediaKeys/<key-doc>   field "key"
- *      (64 hex characters, or 32 bytes in base64). The author creates it
- *      by hand; the security rules let only that account read it;
+ *        users/<uid>/groups/<subject>   field "key"
+ *      (64 hex characters, or 32 bytes in base64). <subject> is the
+ *      subject name = the repo name, read from the address
+ *      (<owner>.github.io/<subject>/...). The author creates it by hand;
+ *      the security rules let only that account read it;
  *   4. the reader pastes it.
  *
  * Optional <meta> tags on the page:
- *   key-doc          id of the Firestore document (default "subject")
+ *   key-doc          subject name to use instead of the one in the address
+ *                    (custom domains, where the address has no repo name)
  *   firebase-config  JSON of the Firebase web config (public by design);
  *                    the default is the project the quiz sync uses.
  *
@@ -67,10 +70,21 @@
     return DEFAULT_CONFIG;
   }
 
-  /** @returns {string} the id of the Firestore key document */
+  /**
+   * @returns {string} the subject name (= the repo name): the key-doc meta
+   *   when present, else the first path segment of a github.io address
+   *   ("" when neither gives one)
+   */
   function keyDocumentId() {
     const meta = document.querySelector('meta[name="key-doc"]');
-    return (meta && meta.content) || "subject";
+    if (meta && meta.content) { return meta.content; }
+    if (/\.github\.io$/i.test(location.hostname)) {
+      const first = location.pathname.split("/").filter(Boolean)[0];
+      if (first && !/\.html?$/i.test(first)) {
+        return decodeURIComponent(first);
+      }
+    }
+    return "";
   }
 
   /**
@@ -147,18 +161,23 @@
    * @returns {Promise<Uint8Array>} the key stored for this account
    */
   async function readAccountKey(user) {
+    const subject = keyDocumentId();
+    if (!subject) {
+      throw new Error("This address does not name the subject, so the " +
+        "key cannot be looked up. Paste the key instead.");
+    }
     let snapshot;
     try {
       snapshot = await firebase.store.getDoc(firebase.store.doc(
-        firebase.db, "users", user.uid, "mediaKeys", keyDocumentId()));
+        firebase.db, "users", user.uid, "groups", subject));
     } catch (problem) {
       throw new Error("This account is not allowed to read the key (" +
         (problem.code || problem.message) + ").");
     }
     if (!snapshot.exists()) {
       throw new Error((user.email || "This account") + " has no key yet." +
-        " Add the document users/" + user.uid + "/mediaKeys/" +
-        keyDocumentId() + " in Firestore.");
+        " Add the document users/" + user.uid + "/groups/" +
+        subject + " in Firestore.");
     }
     const bytes = parseKey(snapshot.data().key);
     if (!bytes) {

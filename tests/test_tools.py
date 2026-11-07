@@ -156,46 +156,6 @@ def test_media_encryption():
     check("a file cannot be passed off under another id", not swapped)
 
 
-def test_reencrypt_media():
-    """reencrypt_media.py: placeholder key to a real key, safe to repeat."""
-    import base64
-    import os
-    import subprocess
-    import sys
-    import tempfile
-    sys.path.insert(0, str(TOOLS))
-    import encrypt_media
-    with tempfile.TemporaryDirectory() as folder:
-        root = Path(folder)
-        source = root / "pic.bin"
-        source.write_bytes(b"a pretend picture")
-        subprocess.run([sys.executable, str(TOOLS / "encrypt_media.py"),
-                        "placeholder", "u01/fig-1", str(source),
-                        "--out", str(root / "media")],
-                       check=True, capture_output=True)
-        stored = root / "media" / "u01" / "fig-1.enc"
-        check("a file made with the placeholder opens with it",
-              encrypt_media.decrypt(encrypt_media.placeholder_key(),
-                                    "u01/fig-1", stored.read_bytes())
-              == b"a pretend picture")
-        key_file = root / "real.key"
-        key = os.urandom(32)
-        key_file.write_text(base64.b64encode(key).decode())
-        run = [sys.executable, str(TOOLS / "reencrypt_media.py"),
-               "placeholder", str(key_file), "--media", str(root / "media")]
-        out = subprocess.run(run, check=True, capture_output=True,
-                             text=True).stdout
-        check("one file is moved to the new key", "1 file(s) moved" in out)
-        check("it opens with the real key",
-              encrypt_media.decrypt(key, "u01/fig-1", stored.read_bytes())
-              == b"a pretend picture")
-        again = stored.read_bytes()
-        out = subprocess.run(run, check=True, capture_output=True,
-                             text=True).stdout
-        check("running it again changes nothing",
-              "0 file(s) moved" in out and stored.read_bytes() == again)
-
-
 def test_book_index_shell():
     """make_book_index.py writes a small page that only shows the
     favicon and loads boot.js from the tag on the CDN."""
@@ -375,9 +335,7 @@ def test_subject_pages_and_build():
                 {"id": "q1", "unit": "Chapter 1", "unitTitle": "One",
                  "section": "A", "kind": "tf", "q": "True or false: x",
                  "answer": True}]}))
-        (book / "media" / "u1" / "f1.enc").write_bytes(
-            encrypt_media.encrypt(encrypt_media.placeholder_key(),
-                                  "u1/f1", b"picture"))
+        (book / "media" / "u1" / "f1.webp").write_bytes(b"picture")
         subject_key = base64.b64encode(os.urandom(32)).decode()
         env = {**os.environ, "SUBJECT_KEY": subject_key}
         out = folder / "out"
@@ -391,7 +349,7 @@ def test_subject_pages_and_build():
               names == ["book.json", "index.html", "quiz", "quiz.html"])
         picture = out / "quiz" / "media" / "u1" / "f1.enc"
         key = base64.b64decode(subject_key)
-        check("picture now opens with the subject key, not the placeholder",
+        check("the plain picture is stored encrypted with the subject key",
               encrypt_media.decrypt(key, "u1/f1", picture.read_bytes())
               == b"picture")
         info = json.loads((out / "book.json").read_text())
@@ -1127,7 +1085,6 @@ if __name__ == "__main__":
     test_refusals()
     test_tag_lister()
     test_media_encryption()
-    test_reencrypt_media()
     test_book_index_shell()
     test_book_index_tool()
     if failures:

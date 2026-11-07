@@ -1,25 +1,26 @@
 /*
  * media-store.js
- * Finds and opens a book's pictures and clips (template v2).
+ * Finds and opens a book's pictures and clips.
  *
  * A media entry in questions.json looks like
  *   { "id": "u03/i07/f02", "alt": "text for the picture",
  *     "role": "figure", "type": "image/webp" }
- * and is stored in the book's own repo as media/<id>.enc: a 12-byte nonce
- * followed by AES-GCM data. The file key is derived from the book key
- * (HKDF-SHA-256, info "file:<id>"), and the id is the authenticated
- * data, so a file cannot be swapped for another. tools/encrypt_media.py
- * writes these files.
  *
- * The book key is a 32-byte key in base64. It is never in the site. A key
- * provider (a function that returns a promise of the key, or null) is set
- * by whatever signs the reader in (see js/sync/README.md). Without a key,
- * or without Web Crypto, load() gives null and the page shows the text
- * instead of the picture. An entry with a "src" instead of an "id" is a
- * plain file that is shown as it is (for the author's own diagrams).
+ * In the book's own repo the file is plain: media/<id>.<ext>, where the
+ * extension follows "type" (image/webp gives media/u03/i07/f02.webp; a
+ * missing type means image/webp). It is shown as it is.
  *
- * questions.json "mediaStore": "repo" (default). Files are fetched when a
- * card or question asks for them, never all at the start.
+ * On an encrypted book site the same entry is stored encrypted under the
+ * subject key, and the page that knows the key (js/encrypted-book.js) sets a
+ * key provider here; then the picture is fetched from <mediaBase><id>.enc
+ * and opened with that key (on a pool site through the index, see
+ * js/pool-files.js). An entry with a "src" instead of an "id" is a plain
+ * file that is shown as it is (for the author's own diagrams).
+ *
+ * The subject key is only in memory. Without it on an encrypted site, or
+ * without Web Crypto, load() gives null and the page shows the text instead
+ * of the picture. questions.json "mediaBase" changes the folder. Files are
+ * fetched when a card or question asks for them, never all at the start.
  */
 (function setUpMediaStore(quiz) {
   "use strict";
@@ -31,16 +32,16 @@
   let keyReason = "";
   /** id -> promise of an object URL (or null) */
   const loaded = new Map();
-  /** The book key once it has been imported, or null */
-  let bookKeyPromise = null;
+  /** The subject key once it has been imported, or null */
+  let keyPromise = null;
 
   /**
-   * Set the function that supplies the book key (base64) or null.
+   * Set the function that supplies the subject key (base64) or null.
    * @param {function(): Promise<string|null>} provider
    */
   function setKeyProvider(provider) {
     media.keyProvider = provider;
-    bookKeyPromise = null;
+    keyPromise = null;
     keyReason = "";
     loaded.clear();
     reasons.clear();
@@ -60,56 +61,95 @@
     });
   }
 
+  /** Extension of a plain file for each media type. */
+  const EXTENSIONS = {
+    "image/webp": "webp", "image/png": "png", "image/jpeg": "jpg",
+    "image/gif": "gif", "image/svg+xml": "svg", "image/avif": "avif",
+    "audio/mpeg": "mp3", "audio/mp4": "m4a", "audio/ogg": "ogg",
+    "audio/wav": "wav", "video/mp4": "mp4", "video/webm": "webm",
+  };
+
   /**
-   * The imported book key, or null when there is none.
+   * The address of a plain file of the book: <base><id>.<ext>.
+   * @param {object} entry  { id, type }
+   * @returns {string}
+   */
+  function plainAddress(entry) {
+    const base = (quiz.book.data && quiz.book.data.mediaBase) || "media/";
+    const extension = EXTENSIONS[entry.type || "image/webp"] || "webp";
+    return base + entry.id + "." + extension;
+  }
+
+  /**
+   * A plain file: checked once so a missing file gives a reason, then shown
+   * as it is.
+   * @param {object} entry  { id, type }
+   * @returns {Promise<string|null>}
+   */
+  async function openPlain(entry) {
+    const address = plainAddress(entry);
+    const response = await fetch(address, { method: "HEAD" });
+    if (response.status === 405 || response.status === 501) {
+      return address;   // a server that does not answer HEAD: just try it
+    }
+    if (!response.ok) {
+      reasons.set(entry.id, "file not found (HTTP " + response.status +
+        ") at " + address);
+      return null;
+    }
+    return address;
+  }
+
+  /**
+   * The imported subject key, or null when there is none.
    * @returns {Promise<CryptoKey|null>}
    */
-  function getBookKey() {
-    if (!bookKeyPromise) {
-      bookKeyPromise = importBookKey();
+  function getKey() {
+    if (!keyPromise) {
+      keyPromise = importKey();
     }
-    return bookKeyPromise;
+    return keyPromise;
   }
 
   /** @returns {Promise<CryptoKey|null>} */
-  async function importBookKey() {
+  async function importKey() {
     if (!window.crypto || !crypto.subtle) {
       keyReason = "this browser cannot decrypt (needs https)";
       return null;
     }
     if (!media.keyProvider) {
-      keyReason = "not signed in, so no key";
+      keyReason = "no key";
       return null;
     }
     try {
       const encoded = await media.keyProvider();
       if (!encoded) {
         keyReason = "no key found" + (media.keyLocation ?
-          " at " + media.keyLocation : " in your account for this book");
+          " at " + media.keyLocation : "");
         return null;
       }
       return await crypto.subtle.importKey(
         "raw", fromBase64(encoded), "HKDF", false, ["deriveKey"]);
     } catch (error) {
       keyReason = error && error.code === "read" ?
-        "could not read the key at " + (media.keyLocation || "your account") +
+        "could not read the key at " + (media.keyLocation || "the key store") +
           ": " + error.message :
-        "the key in your account is not valid base64";
+        "the key is not valid base64";
       return null;
     }
   }
 
   /**
    * The AES key for one file.
-   * @param {CryptoKey} bookKey
+   * @param {CryptoKey} key
    * @param {string} id
    * @returns {Promise<CryptoKey>}
    */
-  function deriveFileKey(bookKey, id) {
+  function deriveFileKey(key, id) {
     const info = new TextEncoder().encode("file:" + id);
     return crypto.subtle.deriveKey(
       { name: "HKDF", hash: "SHA-256", salt: new Uint8Array(0), info },
-      bookKey, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+      key, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
   }
 
   /**
@@ -139,13 +179,16 @@
   }
 
   /**
-   * Fetch and decrypt one file into an object URL.
+   * Open one file: plain in the book's repo, decrypted on an encrypted site.
    * @param {object} entry  { id, type }
    * @returns {Promise<string|null>}
    */
   async function openEncrypted(entry) {
-    const bookKey = await getBookKey();
-    if (!bookKey) {
+    if (!media.keyProvider) {
+      return openPlain(entry);   // the book's own repo: plain files
+    }
+    const key = await getKey();
+    if (!key) {
       reasons.set(entry.id, keyReason);
       return null;
     }
@@ -161,7 +204,7 @@
       return null;
     }
     const bytes = new Uint8Array(await response.arrayBuffer());
-    const fileKey = await deriveFileKey(bookKey, entry.id);
+    const fileKey = await deriveFileKey(key, entry.id);
     let plain;
     try {
       plain = await crypto.subtle.decrypt(
@@ -170,7 +213,7 @@
         fileKey, bytes.slice(NONCE_BYTES));
     } catch (error) {
       reasons.set(entry.id, "the key does not match these files " +
-        "(re-encrypt them, or put the matching key in your account)");
+        "(publish the book again with the subject key)");
       return null;
     }
     const blob = new Blob([plain], { type: entry.type || "image/webp" });

@@ -3,7 +3,10 @@
 A subject site that publishes only ciphertext should also not say what the
 ciphertext is. This module keeps every published file in one flat pool:
 
-    xx/<rest>.bin      xx = the first two characters of the file id
+    bin/xx/<rest>.bin  xx = the first two characters of the file id
+
+(Before the pool moved under bin/, the xx folders sat at the top of the
+site; move_pool_into_bin() moves such a pool and points index.enc at it.)
 
 The id is derived from a secret, so the name tells nobody which book or
 which part of a book a file belongs to. Only the encrypted index
@@ -44,12 +47,17 @@ TAG_BYTES = 16
 MIN_FILE_BYTES = HEADER_BYTES + NONCE_BYTES + TAG_BYTES
 ID_CHARS = 32
 POOL_EXTENSION = ".bin"
+POOL_FOLDER = "bin"              # every pool file lives under this folder
 INDEX_NAME = "index.enc"
 BOOT_NAME = "boot.json"
 ITEM_VERSION_NAME = ".itemrc"    # exact tag of the item UI (reader, quiz, tools)
 GROUP_VERSION_NAME = ".grouprc"  # which hub UI to load ("3" = newest 3.x.x)
 INDEX_FORMAT = 2
-REF_PATTERN = re.compile(r"^[0-9a-f]{2}/[0-9a-f]{%d}\.bin$" % (ID_CHARS - 2))
+REF_PATTERN = re.compile(r"^bin/[0-9a-f]{2}/[0-9a-f]{%d}\.bin$"
+                         % (ID_CHARS - 2))
+# the path of a pool file before the pool moved under bin/
+OLD_REF_PATTERN = re.compile(r"^[0-9a-f]{2}/[0-9a-f]{%d}\.bin$"
+                             % (ID_CHARS - 2))
 
 
 def parse_key(text):
@@ -128,8 +136,9 @@ def file_id(name_key, book_id, path, flags, content):
 
 
 def ref_of(identifier):
-    """The pool path of an id: 'ab/cdef....bin'."""
-    return identifier[:2] + "/" + identifier[2:] + POOL_EXTENSION
+    """The pool path of an id: 'bin/ab/cdef....bin'."""
+    return (POOL_FOLDER + "/" + identifier[:2] + "/" + identifier[2:]
+            + POOL_EXTENSION)
 
 
 class Pool:
@@ -154,7 +163,7 @@ class Pool:
         @param path: the file's own name inside the book
         @param content: the plain bytes
         @param compress: gzip before encrypting (text yes, pictures no)
-        @return: the pool path ('ab/cdef....bin')
+        @return: the pool path ('bin/ab/cdef....bin')
         """
         flags = 1 if compress else 0
         ref = ref_of(file_id(self.name_key, book_id, path, flags, content))
@@ -175,7 +184,7 @@ class Pool:
         @return: sorted list of pool paths
         """
         found = []
-        for item in self.root.glob("??/*" + POOL_EXTENSION):
+        for item in self.root.glob(POOL_FOLDER + "/??/*" + POOL_EXTENSION):
             ref = item.relative_to(self.root).as_posix()
             if ref not in self.used:
                 found.append(ref)
@@ -192,10 +201,64 @@ class Pool:
         removed = self.orphans()
         for ref in removed:
             (self.root / ref).unlink()
-        for folder in sorted(self.root.glob("??")):
+        pool = self.root / POOL_FOLDER
+        for folder in sorted(pool.glob("??")):
             if folder.is_dir() and not any(folder.iterdir()):
                 folder.rmdir()
+        if pool.is_dir() and not any(pool.iterdir()):
+            pool.rmdir()
         return removed
+
+
+def old_pool_files(root):
+    """Pool files still in the old place: xx/<id>.bin at the top of a site.
+
+    @param root: the site root
+    @return: sorted list of their paths relative to root
+    """
+    root = Path(root)
+    found = []
+    for folder in sorted(root.glob("??")):
+        if not folder.is_dir():
+            continue
+        for item in sorted(folder.glob("*" + POOL_EXTENSION)):
+            ref = item.relative_to(root).as_posix()
+            if OLD_REF_PATTERN.match(ref):
+                found.append(ref)
+    return found
+
+
+def move_pool_into_bin(root, key):
+    """Move an old pool (xx/<id>.bin at the top of the site) under bin/ and
+    point every book of index.enc at the new paths.
+
+    Safe to repeat: with the pool already under bin/ it does nothing. The
+    index is read first, so a wrong key stops it before any file moves.
+
+    @param root: the site root
+    @param key: the subject key
+    @return: the number of files moved
+    """
+    root = Path(root)
+    old = old_pool_files(root)
+    index = read_index(root, key) if (root / INDEX_NAME).is_file() else None
+    changed = False
+    for book in (index or {}).get("books", []):
+        files = book.get("files", {})
+        for logical, ref in list(files.items()):
+            if OLD_REF_PATTERN.match(ref):
+                files[logical] = POOL_FOLDER + "/" + ref
+                changed = True
+    for ref in old:
+        target = root / POOL_FOLDER / ref
+        target.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(root / ref, target)
+    for folder in sorted(root.glob("??")):
+        if folder.is_dir() and not any(folder.iterdir()):
+            folder.rmdir()
+    if changed:
+        write_index(root, key, index)
+    return len(old)
 
 
 def write_index(root, key, index):
