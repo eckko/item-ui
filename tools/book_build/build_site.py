@@ -22,8 +22,10 @@ key = load_key(keyfile)
 (site / "media").mkdir(parents=True, exist_ok=True)
 
 bank = json.loads((repo / "questions.json").read_text(encoding="utf8"))
-chapters = json.loads((repo / "book-structure" / "chapters.json")
-                      .read_text(encoding="utf8"))["chapters"]
+_chapters_file = repo / "book-structure" / "chapters.json"
+if not _chapters_file.exists():
+    _chapters_file = repo / "book-structure" / "chapters.skeleton.json"
+chapters = json.loads(_chapters_file.read_text(encoding="utf8"))["chapters"]
 
 # ----- parts from the EPUB navigation
 import re as _re0
