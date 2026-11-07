@@ -180,6 +180,10 @@ def main(argv=None):
             with zipfile.ZipFile(book / args.epub) as archive:
                 archive.extractall(epub_dir)
             chapters = book / "book-structure" / "chapters.json"
+            if not chapters.exists():
+                # add-structure's unit list is enough to read a book before
+                # any notes or questions exist.
+                chapters = book / "book-structure" / "chapters.skeleton.json"
             run(HERE / "extract_epub.py", epub_dir, chapters, work)
             run(HERE / "build_site.py", book, work, out, keyfile, epub_dir)
             if args.notes_epub:
