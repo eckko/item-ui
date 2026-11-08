@@ -1,6 +1,6 @@
-# Publishing a book to R2 (one-ui)
+# Publishing a book to R2 (library)
 
-The one-ui library keeps every book as ciphertext in a private Cloudflare R2
+The library keeps every book as ciphertext in a private Cloudflare R2
 bucket. A Worker serves it and writes `index.json`. The publishing tool and
 the workflow live in the private repo `eckko/actions` (`tools/publish_r2.py`,
 `.github/workflows/refresh-library.yml`); it uses this repo's
@@ -38,10 +38,10 @@ are deleted. `added` in the card is kept from the first publish.
 The Worker serves only `p/<id>/card.enc`, `p/<id>/cover.enc` and
 `p/<id>/(data|media|quiz)/...enc` (up to three folders deep, no segment
 starting with a dot). A new file kind needs the Worker's allow-list widened
-first (`worker/src/index.js` in the one-ui repo).
+first (`worker/src/index.js` in the library repo).
 
 ## Not done yet
 
 The reader and quiz still read their files from the page's own folder or the
 pool. Reading from `<meta name="book-base">`, adding `?v=<card.v>` and loading
-`quiz/parts.enc` is phase 6 of the one-ui plan.
+`quiz/parts.enc` is phase 6 of the library plan.
