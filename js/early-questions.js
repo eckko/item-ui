@@ -45,6 +45,36 @@
   }
 
   /**
+   * @param {string} path  a file of the book
+   * @returns {string} its address (js/book-files.js, when loaded, may put
+   *   the book elsewhere and add a version)
+   */
+  function where(path) {
+    const files = window.RecallQuizBookFiles;
+    return files ? files.address(path) : path;
+  }
+
+  /**
+   * A book kept by the library lists the files of a split bank in
+   * window.RecallQuizEncrypted.parts (a small encrypted JSON list of
+   * paths); the chunks are fetched together and joined.
+   * @param {function} fetchOne  (address, key) -> Promise<object>
+   * @param {CryptoKey} key  the subject key
+   * @returns {Promise<object>} one bank
+   */
+  function fetchListedParts(fetchOne, key) {
+    return fetchOne(where(window.RecallQuizEncrypted.parts), key)
+      .then(function load(paths) {
+        if (!Array.isArray(paths) || !paths.length) {
+          throw new Error("empty list of parts");
+        }
+        return Promise.all(paths.map(function one(path) {
+          return fetchOne(where(path), key);
+        }));
+      }).then(mergeParts);
+  }
+
+  /**
    * Encrypted book site (template v3): the page set
    * window.RecallQuizEncrypted = { questions: "quiz/questions.enc" } and
    * unlocked the subject key (js/unlock.js) before starting this file.
@@ -84,9 +114,16 @@
                 return fetchOne(pool.addressOf(path), key);
               })).then(mergeParts);
           }
+          if (!usePool && window.RecallQuizEncrypted.parts) {
+            return fetchListedParts(fetchOne, key).catch(
+              function single() {
+                return fetchOne(where(window.RecallQuizEncrypted.questions),
+                  key);
+              });
+          }
           return fetchOne(usePool ?
             pool.addressOf(window.RecallQuizEncrypted.questions) :
-            window.RecallQuizEncrypted.questions, key);
+            where(window.RecallQuizEncrypted.questions), key);
         });
     });
   }
