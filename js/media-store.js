@@ -197,7 +197,9 @@
     if (pool && pool.enabled) {
       return openFromPool(pool, base + entry.id + ".enc", entry);
     }
-    const response = await fetch(base + entry.id + ".enc");
+    const files = window.RecallQuizBookFiles;
+    const path = base + entry.id + ".enc";
+    const response = await fetch(files ? files.address(path) : path);
     if (!response.ok) {
       reasons.set(entry.id, "file not found (HTTP " + response.status +
         "): is this branch published?");

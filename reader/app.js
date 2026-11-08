@@ -21,11 +21,11 @@
   const SHARED_BASE = SCRIPT_ADDRESS.replace(/reader\/app\.js(\?.*)?$/, "");
   if (typeof window.RecallQuizAssetBase !== "string") window.RecallQuizAssetBase = SHARED_BASE;
   /* Loaded in this order: each one needs the one before it. */
-  const SHARED_SCRIPTS = ["js/default-settings.js", "js/themes-list.js", "js/theme-picker.js",
+  const SHARED_SCRIPTS = ["js/book-files.js", "js/default-settings.js", "js/themes-list.js", "js/theme-picker.js",
     "js/helpers.js", "js/reading-settings.js", "js/reading-panel.js"];
   /* Optional <meta name="book-base" content="books/xyz/"> when the encrypted files
-   * are not next to the page. */
-  const BASE = (document.querySelector('meta[name="book-base"]') || {}).content || "";
+   * are not next to the page, and <meta name="book-version">; both are read by
+   * js/book-files.js, which is loaded with the shared scripts above. */
   const $ = (s, r = document) => r.querySelector(s);
   const el = (tag, cls, text) => {
     const e = document.createElement(tag);
@@ -64,7 +64,7 @@
 
   async function fetchEnc(path) {
     const pool = window.RecallQuizPool;
-    const r = await fetch(pool && pool.enabled ? pool.addressOf(path) : BASE + path);
+    const r = await fetch(pool && pool.enabled ? pool.addressOf(path) : window.RecallQuizBookFiles.address(path));
     if (!r.ok) throw new Error(path + " " + r.status);
     const buf = await r.arrayBuffer();
     stats.bytes += buf.byteLength; stats.files += 1;

@@ -40,8 +40,23 @@ The Worker serves only `p/<id>/card.enc`, `p/<id>/cover.enc` and
 starting with a dot). A new file kind needs the Worker's allow-list widened
 first (`worker/src/index.js` in the library repo).
 
-## Not done yet
+## How the reader and quiz find the files
 
-The reader and quiz still read their files from the page's own folder or the
-pool. Reading from `<meta name="book-base">`, adding `?v=<card.v>` and loading
-`quiz/parts.enc` is phase 6 of the library plan.
+A page that is not next to the book's files sets two meta tags:
+
+```
+<meta name="book-base" content="https://<worker>/p/<book id>/">
+<meta name="book-version" content="<card.v>">
+```
+
+`js/book-files.js` turns a path into `<book-base><path>?v=<version>`; the
+reader (`reader/app.js`), the question download (`js/early-questions.js`)
+and the quiz pictures (`js/media-store.js`) all use it. Without the tags
+the paths are unchanged, so every other site works as before.
+
+A quiz page may also set `RecallQuizEncrypted.parts = "quiz/parts.enc"`:
+the file is a JSON list of part paths, fetched together and joined. When
+it cannot be read, `RecallQuizEncrypted.questions` (one bank) is used.
+The key comes from `js/unlock.js` with `<meta name="key-doc"
+content="library">`, so a reader signed in to the library on the same
+site is not asked again.
