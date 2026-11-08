@@ -1,9 +1,11 @@
 # Publishing a book to R2 (one-ui)
 
 The one-ui library keeps every book as ciphertext in a private Cloudflare R2
-bucket. A Worker serves it and writes `index.json`. This page is the part
-that lives in this repo: `tools/site/publish_r2.py`, the workflow
-`templates/publish-r2.yml` and the tests `tests/test_publish_r2.py`.
+bucket. A Worker serves it and writes `index.json`. The publishing tool and
+the workflow live in the private repo `eckko/actions` (`tools/publish_r2.py`,
+`.github/workflows/refresh-library.yml`); it uses this repo's
+`tools/book_build/build_book.py` and `tools/site/opaque.py` at an exact tag.
+This page only describes what the reader must expect in the bucket.
 
 ## Layout in the bucket
 
@@ -18,8 +20,9 @@ p/<book id>/quiz/q/<unit>.enc      one file per unit, listed in
 p/<book id>/quiz/parts.enc         a JSON list of the part paths
 ```
 
-The book id is 32 hex characters from `.onebook.json` in the book repo. It
-never changes. Every file is RQE1 under the library key (`opaque.seal`).
+The book id is 32 hex characters made on the first refresh and kept, with the
+book's last commit and tool tag, in a sealed `state/` object in the bucket
+(never in a book repo, never served by the Worker). It never changes. Every file is RQE1 under the library key (`opaque.seal`).
 `card.enc` and `index.json` are public; they hold ciphertext only.
 
 ## Change check and order
