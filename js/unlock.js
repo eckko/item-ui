@@ -12,7 +12,8 @@
  *        users/<uid>/groups/<subject>   field "key"
  *      (64 hex characters, or 32 bytes in base64). <subject> is the
  *      subject name = the repo name, read from the address
- *      (<owner>.github.io/<subject>/...). The author creates it by hand;
+ *      (<owner>.github.io/<subject>/... or <subject>.<account>.workers.dev).
+ *      The author creates it by hand;
  *      the security rules let only that account read it;
  *   4. the reader pastes it.
  *
@@ -72,8 +73,9 @@
 
   /**
    * @returns {string} the subject name (= the repo name): the key-doc meta
-   *   when present, else the first path segment of a github.io address
-   *   ("" when neither gives one)
+   *   when present, else the first path segment of a github.io address,
+   *   else the first label of a workers.dev host
+   *   (<subject>.<account>.workers.dev); "" when none gives one
    */
   function keyDocumentId() {
     const meta = document.querySelector('meta[name="key-doc"]');
@@ -84,6 +86,8 @@
         return decodeURIComponent(first);
       }
     }
+    const worker = /^([^.]+)\.[^.]+\.workers\.dev$/i.exec(location.hostname);
+    if (worker) { return worker[1].toLowerCase(); }
     return "";
   }
 
