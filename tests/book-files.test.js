@@ -10,8 +10,8 @@ const SOURCE = fs.readFileSync(
   path.join(__dirname, "..", "js", "book-files.js"), "utf8");
 
 /** Run the script on a fake page that has the given meta tags. */
-function load(metas) {
-  const window = {};
+function load(metas, settings) {
+  const window = settings ? { RecallQuizBookSettings: settings } : {};
   const document = {
     querySelector: (selector) => {
       const name = /name="([^"]+)"/.exec(selector)[1];
@@ -40,4 +40,10 @@ test("book-version is added as ?v=", () => {
 test("the version is escaped", () => {
   const files = load({ "book-version": "a b&c" });
   assert.equal(files.address("f.enc"), "f.enc?v=a%20b%26c");
+});
+
+test("settings on the window win over the meta tags", () => {
+  const files = load({ "book-base": "/old/", "book-version": "1" },
+    { base: "/p/y/", version: "7" });
+  assert.equal(files.address("a.enc"), "/p/y/a.enc?v=7");
 });

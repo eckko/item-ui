@@ -8,6 +8,10 @@
  *   <meta name="book-base" content="https://worker.example/p/<id>/">
  *   <meta name="book-version" content="3">
  *
+ * A page that is rewritten after it starts (js/boot.js replaces the whole
+ * page) sets window.RecallQuizBookSettings = { base, version } instead,
+ * which wins over the tags.
+ *
  * RecallQuizBookFiles.address("data/manifest.enc") then gives
  * "<book-base>data/manifest.enc?v=3". The version is the card's "v": a
  * changed file gets a new address, so a cached copy is never shown for a
@@ -24,6 +28,11 @@
    * @returns {string} its content, or ""
    */
   function metaContent(name) {
+    const set = window.RecallQuizBookSettings || {};
+    const key = name === "book-base" ? "base" : "version";
+    if (set[key]) {
+      return String(set[key]);
+    }
     const tag = document.querySelector('meta[name="' + name + '"]');
     return (tag && tag.content) || "";
   }
