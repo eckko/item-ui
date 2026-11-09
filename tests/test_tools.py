@@ -820,6 +820,77 @@ def test_extract_epub_tables_numbers_and_subsections():
         shutil.rmtree(folder, ignore_errors=True)
 
 
+def test_extract_epub_chapters_share_a_file():
+    """Chapters that all sit in one HTML file (a PDF conversion) are cut at
+    their navigation anchors: each gets its own text and figures, an
+    appendix is found by its own title, and a unit's own entry wins over a
+    section heading that appears earlier."""
+    import shutil
+    folder = Path(tempfile.mkdtemp())
+    try:
+        epub = folder / "epub"
+        epub.mkdir()
+        (epub / "content.opf").write_text(
+            '<package><manifest><item id="a" href="index_split_000.html"/>'
+            '<item id="b" href="index_split_001.html"/></manifest>'
+            '<spine><itemref idref="a"/><itemref idref="b"/></spine>'
+            "</package>")
+
+        def entry(title, target):
+            return ("<navPoint><navLabel><text>%s</text></navLabel>"
+                    '<content src="%s"/></navPoint>' % (title, target))
+        (epub / "toc.ncx").write_text(
+            "<ncx><navMap>"
+            + entry("One: ALPHA", "index_split_000.html#p1")
+            + entry("Two: BETA", "index_split_000.html#p3")
+            + entry("Appendix 1: First", "index_split_001.html#p5")
+            + entry("Appendix 2: Second", "index_split_001.html#p7")
+            + "</navMap></ncx>")
+        (epub / "index_split_000.html").write_text(
+            '<html><body><p><a id="p1"></a>One</p><p>alpha words here.</p>'
+            '<p><img src="a.jpg"/></p>'
+            '<p><a id="p3"></a>Two</p><p>beta words here.</p></body></html>')
+        (epub / "index_split_001.html").write_text(
+            '<html><body><p><a id="p5"></a>Appendix 1</p>'
+            "<p>first appendix words.</p>"
+            '<p><a id="p7"></a>Appendix 2</p>'
+            "<p>second appendix words.</p></body></html>")
+        (epub / "a.jpg").write_bytes(b"x")
+        chapters = folder / "chapters.json"
+        chapters.write_text(json.dumps({"id": "t3", "chapters": [
+            {"unit": "Chapter 1", "unitTitle": "Alpha", "idPrefix": "u1",
+             "sections": []},
+            {"unit": "Chapter 2", "unitTitle": "Beta", "idPrefix": "u2",
+             "sections": []},
+            {"unit": "Appendix 1", "unitTitle": "First", "idPrefix": "u3",
+             "sections": []},
+            {"unit": "Appendix 2", "unitTitle": "Second", "idPrefix": "u4",
+             "sections": []}]}))
+        out = folder / "out"
+        result = run(TOOLS / "book_build" / "extract_epub.py", epub,
+                     chapters, out, cwd=ROOT)
+        if result.returncode != 0:
+            print(result.stderr[-300:])
+        check("extract_epub runs on chapters sharing a file",
+              result.returncode == 0)
+        text = {n: (out / "chapters" / (n + ".json")).read_text()
+                for n in ("u1", "u2", "u3", "u4")}
+        check("chapter 1 has its own text and figure",
+              "alpha words" in text["u1"] and "a.jpg" in text["u1"]
+              or "alpha words" in text["u1"] and "<img" in text["u1"])
+        check("chapter 1 stops where chapter 2 starts",
+              "beta words" not in text["u1"])
+        check("chapter 2 has only its own text",
+              "beta words" in text["u2"] and "alpha words" not in text["u2"])
+        check("each appendix is cut at its own entry",
+              "first appendix words" in text["u3"]
+              and "second appendix" not in text["u3"]
+              and "second appendix words" in text["u4"]
+              and "first appendix" not in text["u4"])
+    finally:
+        shutil.rmtree(folder, ignore_errors=True)
+
+
 def test_extract_epub_rule_units():
     """A unit like "Rule #1" has one navigation entry ("Rule #1: Name")
     and its sections are headings inside the file; it is still cut."""
@@ -1082,6 +1153,7 @@ if __name__ == "__main__":
     test_extract_epub_navigation_entities()
     test_extract_epub_topics_and_subtopics()
     test_extract_epub_tables_numbers_and_subsections()
+    test_extract_epub_chapters_share_a_file()
     test_extract_epub_rule_units()
     test_book_build_front_back_units()
     test_book_build_front_back_units("First")  # unnumbered title

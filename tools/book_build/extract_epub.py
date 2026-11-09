@@ -63,7 +63,30 @@ nav = re.findall(r"<navPoint[^>]*>.*?<text>(.*?)</text>.*?"
                  r'<content src="([^"#]+)', ncx, re.S)
 # the navigation file writes an apostrophe as &#39; and & as &amp;
 nav_files = [(unescape(t), f) for t, f in nav]
+# the same entries with the anchor each one points at ("" for a whole file)
+nav_full = [(unescape(t), src.split("#")[0],
+             src.split("#", 1)[1] if "#" in src else "")
+            for t, src in re.findall(
+                r"<navPoint[^>]*>.*?<text>(.*?)</text>.*?"
+                r'<content src="([^"]+)"', ncx, re.S)]
 file_index = {f: i for i, f in enumerate(spine)}
+
+
+def read_nav_depths(text):
+    """Nesting depth (1 = top level) of each navPoint, in document order."""
+    depths, level = [], 0
+    for token in re.findall(r"<navPoint\b|</navPoint>", text):
+        if token == "</navPoint>":
+            level -= 1
+        else:
+            level += 1
+            depths.append(level)
+    return depths
+
+
+nav_depth = read_nav_depths(ncx)
+if len(nav_depth) != len(nav_full):
+    nav_depth = [1] * len(nav_full)
 
 
 def file_range(start_file, section_titles=()):
@@ -150,6 +173,178 @@ def unit_nav_file(unit):
         if f in file_index and re.match(re.escape(key) + r"\b", norm(title)):
             return f
     return None
+
+
+# ----- cutting inside a file
+# Some EPUBs (a PDF run through Calibre) hold the whole book in a few big
+# files and point each navigation entry at an anchor inside one. Then two
+# chapters share a file, and cutting by file gives both the same text. In
+# that case (see anchor_mode below) a chapter runs from the block its entry
+# points at to the block of the next chapter, which may be in the same file.
+BLOCK_TAGS = ["p", "div", "li", "blockquote", "h1", "h2", "h3", "h4"]
+_docs = {}
+
+
+def load_doc(f):
+    """(body, block list, {id(block): index}) of one spine file, read once."""
+    if f not in _docs:
+        soup = BeautifulSoup((epub / f).read_text(encoding="utf8"), "lxml")
+        body = soup.body or soup
+        tables_to_paragraphs(body)
+        blocks = body.find_all(BLOCK_TAGS, recursive=True)
+        _docs[f] = (body, blocks, {id(b): i for i, b in enumerate(blocks)})
+    return _docs[f]
+
+
+def block_of(f, anchor):
+    """Index of the block an anchor points at: the block that has the id (or
+    holds the element that has it), else the first block after it."""
+    if not anchor:
+        return 0
+    body, blocks, index = load_doc(f)
+    el = body.find(id=anchor) or body.find(attrs={"name": anchor})
+    if el is None:
+        return 0
+    node = el
+    while node is not None:
+        if id(node) in index:
+            return index[id(node)]
+        node = node.parent
+    after = el.find_next(BLOCK_TAGS)
+    return index.get(id(after), 0) if after is not None else 0
+
+
+def pos_of(f, anchor):
+    return (file_index[f], block_of(f, anchor))
+
+
+def chapter_nav_entry(number, unit_title):
+    """chapter_nav_file with the anchor: (file, anchor) or None."""
+    for title, f, a in nav_full:
+        if f in file_index and re.match(
+                r"(?:Chapter\s+|#\s*)?%d\s*[-.:]\s" % number, title, re.I):
+            return f, a
+    start = chapter_nav_file(number, unit_title)
+    if not start:
+        return None
+    # several chapters can share the file: take the entry whose title holds
+    # the chapter title ("Two: ONE SECOND BEFORE"), not the first of the file
+    key = norm(unit_title)
+    if key:
+        for title, f, a in nav_full:
+            if f == start and key in norm(title):
+                return f, a
+    for title, f, a in nav_full:
+        if f == start:
+            return f, a
+    return start, ""
+
+
+def sections_in_nav_pos(sections, after=(0, -1)):
+    """[(file, anchor, section)] for the sections of an unnumbered or grouped
+    unit that have a navigation entry of their own: as unit_sections_in_nav,
+    and also "Chapter 4: The Seam Model" for the section "The Seam Model".
+    Sections are taken in order, each from the first matching entry after the
+    one before it (and after `after`), so a heading that returns in every
+    chapter ("Conclusion", "Use Cases") is not taken from an earlier one."""
+    entries = []
+    for title, f, a in nav_full:
+        if f not in file_index:
+            continue
+        numbered = re.match(r"chapter\s+\d+\s*[:.\-]\s*(.+)", title, re.I)
+        if numbered:
+            entries.append((pos_of(f, a), f, a, norm(numbered.group(1)), None))
+            continue
+        key = first_word_key(title)
+        if not key or re.match(r"(\d|chapter\b|part\b|appendix\b)", key):
+            continue
+        entries.append((pos_of(f, a), f, a, None, key))
+    found, cursor = [], after
+    for section in sections:
+        for at, f, a, tail, key in entries:
+            if at <= cursor:
+                continue
+            if (tail is not None and tail == norm(section)) or \
+                    (key is not None and
+                     re.match(re.escape(key) + r"\b", norm(section))):
+                found.append((f, a, section))
+                cursor = at
+                break
+    return found
+
+
+def unit_nav_entry(unit):
+    key = norm(unit)
+    for title, f, a in nav_full:
+        if f in file_index and re.match(re.escape(key) + r"\b", norm(title)):
+            return f, a
+    return None
+
+
+def find_text_after(after, title):
+    """Position of the first short block after `after` whose text is the
+    title: how a unit with no navigation entry (a technique of a catalogue
+    chapter) is found."""
+    key = norm(title)
+    if not key:
+        return None
+    first_file, first_block = after
+    for fi in range(first_file, len(spine)):
+        body, blocks, index = load_doc(spine[fi])
+        for bi, block in enumerate(blocks):
+            if fi == first_file and bi <= first_block:
+                continue
+            if block.find(["p", "div", "li", "blockquote"]):
+                continue
+            text = plain(block)
+            if len(text) < 120 and norm(text) == key:
+                return (fi, bi)
+    return None
+
+
+def plan_by_anchor(units):
+    """{unit: (segments, opens)} for an EPUB where chapters share files.
+    segments: [(file, first block, block after the last or None)];
+    opens: {(file, block): section} where a grouped unit opens a section.
+    A unit with no start is left out (it has no text to cut)."""
+    starts, opens_of = {}, {}
+    previous = (0, -1)
+    for c in units:
+        unit, start, opens = c["unit"], None, {}
+        if re.match(APPENDIX_TITLE, unit, re.I):
+            number = re.match(r"Appendix\s+(\w+)", unit, re.I)
+            wanted = norm(c.get("unitTitle") or "")
+            entries = [(t, f, a) for t, f, a in nav_full
+                       if f in file_index and re.match(APPENDIX_TITLE, t, re.I)]
+            hit = next(((f, a) for t, f, a in entries
+                        if wanted and wanted in norm(t)), None)
+            if hit is None and number:
+                hit = next(((f, a) for t, f, a in entries
+                            if re.match(r"Appendix\s+%s\b" % number.group(1),
+                                        t, re.I)), None)
+            if hit is None and len(entries) == 1:
+                hit = entries[0][1:]
+            start = pos_of(*hit) if hit else None
+        elif re.match(r"Chapter \d+$", unit):
+            hit = chapter_nav_entry(int(unit.split()[1]), c["unitTitle"])
+            start = pos_of(*hit) if hit else None
+        else:
+            hit = unit_nav_entry(unit)
+            if hit:
+                start = pos_of(*hit)      # the unit's own entry comes first
+            cursor = (start[0], start[1] - 1) if start is not None else previous
+            for f, a, section in sections_in_nav_pos(c["sections"], cursor):
+                opens.setdefault(pos_of(f, a), section)
+            if start is None:
+                if opens:
+                    start = min(opens)
+                elif c["sections"] and not re.match(
+                        r"whole book", unit, re.I):
+                    start = find_text_after(previous, c["sections"][0])
+        if start is not None:
+            starts[unit], opens_of[unit] = start, opens
+            previous = start
+    return starts, opens_of
 
 
 # ----- text colours
@@ -315,10 +510,66 @@ def is_title_line(block, text, forms, heading_keys):
 
 report = {"chapters": {}, "excluded": [], "images": {"found": 0, "placed": 0,
                                                        "alt_generated": 0}}
+starts, opens_of = plan_by_anchor(chapters)
+# two units that start in one file: cut by anchor, not by file
+anchor_mode = len({s[0] for s in starts.values()}) < len(starts)
+
+
+BACK_MATTER = re.compile(
+    r"(appendi(x|ces)|glossary|index|notes|bibliography|references|"
+    r"further reading|acknowledg|about the (author|book)|epilogue|afterword|"
+    r"colophon|copyright|also by)\b", re.I)
+
+
+def segments_by_anchor(c):
+    """[(file, first block, block after the last or None)] of one unit: from
+    its start to the next unit's start or the next navigation entry of the
+    same or a higher level that is not one of its own sections."""
+    unit = c["unit"]
+    start = starts[unit]
+    skip = {norm(s) for s in c["sections"]}
+    if re.match(APPENDIX_TITLE, unit, re.I):
+        skip |= {norm(t) for t in appendix_titles}
+    start_depth = next((nav_depth[i] for i, (t, f, a) in enumerate(nav_full)
+                        if f in file_index and pos_of(f, a) == start),
+                       min(nav_depth, default=1))
+    ends = [s for u, s in starts.items() if u != unit and s > start]
+    if not ends:
+        # the last unit: its text ends at the back matter, not at a
+        # sub-heading entry of the navigation
+        for i, (title, f, a) in enumerate(nav_full):
+            if f not in file_index or nav_depth[i] > start_depth:
+                continue
+            at = pos_of(f, a)
+            if at > start and BACK_MATTER.match(title) and \
+                    norm(title) not in skip:
+                ends.append(at)
+    end = min(ends) if ends else None
+    if end is None:
+        last, cut = len(spine) - 1, None
+    elif end[1] == 0 and end[0] > start[0]:
+        last, cut = end[0] - 1, None     # the next unit opens its own file
+    else:
+        last, cut = end[0], end[1]
+    segments = []
+    for k in range(start[0], last + 1):
+        lo = start[1] if k == start[0] else 0
+        hi = cut if (cut is not None and k == last) else None
+        segments.append((spine[k], lo, hi))
+    return segments
+
+
 for c in chapters:
     unit = c["unit"]
     section_starts = {}   # file -> section title it opens (unnumbered units)
-    if re.match(APPENDIX_TITLE, unit, re.I):
+    opens_at = {}         # (file, block) -> section it opens (anchor mode)
+    if anchor_mode:
+        if unit not in starts:
+            continue      # no entry to start from: no text to cut
+        segments = segments_by_anchor(c)
+        files = [f for f, lo, hi in segments]
+        opens_at = opens_of[unit]
+    elif re.match(APPENDIX_TITLE, unit, re.I):
         if not appendix_file:
             continue      # the EPUB has no appendix entry to cut
         files = file_range(appendix_file, appendix_titles + c["sections"])
@@ -381,10 +632,9 @@ for c in chapters:
         while candidate in taken:
             candidate, number = f"{base}-{number}", number + 1
         return candidate
-    for f in files:
-        soup = BeautifulSoup((epub / f).read_text(encoding="utf8"), "lxml")
-        body = soup.body or soup
-        tables_to_paragraphs(body)
+    for f, lo, hi in (segments if anchor_mode else
+                      [(x, 0, None) for x in files]):
+        body, block_list, _index = load_doc(f)
         opens = section_starts.get(f)
         in_title = bool(opens)    # still inside the file's own title blocks
         if opens:
@@ -398,9 +648,21 @@ for c in chapters:
             found_titles.add(opens)
         heading_keys = [norm(h.get_text(" ", strip=True)) for h in
                         body.find_all(["h1", "h2", "h3", "h4"])]
-        block_list = body.find_all(["p", "div", "li", "blockquote", "h1", "h2", "h3", "h4"],
-                                   recursive=True)
         for position, block in enumerate(block_list):
+            if position < lo or (hi is not None and position >= hi):
+                continue          # another chapter's part of a shared file
+            if (file_index[f], position) in opens_at:
+                # a grouped unit's next section starts here (its chapter)
+                opens = opens_at[(file_index[f], position)]
+                if single:
+                    node = nodes[0]
+                else:
+                    node = {"id": f"{prefix}-{slug(opens)}", "level": 2,
+                            "title": opens, "parent": None, "html": []}
+                    nodes.append(node)
+                current = section_node = node
+                found_titles.add(opens)
+                in_title = True
             if block.find(["p", "div", "li", "blockquote"]):
                 # a picture placed straight in a wrapper div beside its
                 # caption paragraph is kept; the wrapper's text blocks
@@ -418,7 +680,10 @@ for c in chapters:
                 # a title line): the node already carries it
                 if block.name in ("h1", "h2") or (
                         len(text) < 120 and norm(text) and
-                        norm(text) in norm(opens)):
+                        norm(text) in norm(opens)) or (
+                        anchor_mode and len(text) < 140 and
+                        re.match(r"chapter\s+\d+\b", text, re.I) and
+                        norm(opens) in norm(text)):
                     continue
                 in_title = False
             if cls == "calibre_17" and re.match(r"^CHAPTER \d+$", text):
