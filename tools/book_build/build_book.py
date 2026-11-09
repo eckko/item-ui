@@ -157,11 +157,14 @@ def main(argv=None):
     bank = json.loads((book / "questions.json").read_text(encoding="utf-8"))
     if not ID.match(bank.get("id", "")):
         sys.exit("questions.json needs a lower-case \"id\"")
-    # A book with no questions has no quiz view, so the hub greys out Test.
+    # A book with no questions has no quiz view, so the hub greys out Test;
+    # one with no EPUB has no read view, so it greys out Read. A book with
+    # neither is still listed (title and card only) so its place in the
+    # library can be checked.
     has_quiz = bool(bank.get("questions"))
     if not has_quiz and not args.epub:
-        sys.exit("questions.json has no questions and no --epub was given: "
-                 "the book would have no view at all")
+        print("note: no EPUB and no questions: the book is listed with "
+              "Read and Test both off")
 
     if out.exists():
         shutil.rmtree(out)
