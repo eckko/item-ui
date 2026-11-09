@@ -369,9 +369,16 @@ def test_subject_pages_and_build():
              "--book", str(empty), "--template-tag", "3.0.0",
              "--out", str(folder / "empty-out")],
             capture_output=True, text=True, env=env)
-        check("a book with no questions and no EPUB is refused, so the hub "
-              "never shows a Test button that cannot work",
-              result.returncode != 0)
+        check("a book with no questions and no EPUB still builds, listed "
+              "with no views (the library greys out Read and Test)",
+              result.returncode == 0)
+        empty_info = json.loads(
+            (folder / "empty-out" / "book.json").read_text())
+        check("its book.json has no views",
+              empty_info["views"] == {} and empty_info["id"] == "t2")
+        check("it has no data, media or quiz folder",
+              sorted(p.name for p in (folder / "empty-out").iterdir())
+              == ["book.json", "index.html"])
     finally:
         shutil.rmtree(folder, ignore_errors=True)
 
