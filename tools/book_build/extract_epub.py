@@ -84,11 +84,20 @@ def file_range(start_file, section_titles=()):
 _map = json.loads(chapters_json.read_text(encoding="utf8"))
 chapters = _map["chapters"]
 book_id = _map["id"]
+NUMBER_WORDS = {w: i for i, w in enumerate(
+    "one two three four five six seven eight nine ten eleven twelve "
+    "thirteen fourteen fifteen sixteen seventeen eighteen nineteen "
+    "twenty".split(), 1)}
 nav_by_number = {}
 for title, f in nav_files:
     m = re.match(r"(?:Chapter\s+|#\s*)?(\d+)\s*[-.:]\s", title, re.I)
     if m:
         nav_by_number[int(m.group(1))] = f
+        continue
+    # "One. The Basics", "Five: System Traps": the number written as a word
+    m = re.match(r"([A-Za-z]+)\s*[.:]\s", title)
+    if m and m.group(1).lower() in NUMBER_WORDS:
+        nav_by_number.setdefault(NUMBER_WORDS[m.group(1).lower()], f)
 APPENDIX_TITLE = r"Appendi(?:x|ces)\b"
 appendix_nav = [(t, f) for t, f in nav_files
                 if re.match(APPENDIX_TITLE, t, re.I)]
